@@ -1,44 +1,17 @@
+#include <iostream>
+#include <sstream>
 #include <graphics.h>
+#include <vector>
 #include <conio.h>
+#include "utility.h"
 #include "gui.h"
-
-// put transparent image in EasyX
-// credit: csdn@weixin_45779485
-void putAlphaImage(int picX, int picY, IMAGE* picture) {
-	DWORD* dst = GetImageBuffer();
-	DWORD* draw = GetImageBuffer();
-	DWORD* src = GetImageBuffer(picture);
-	int picture_width = picture->getwidth();
-	int picture_height = picture->getheight();
-	int graphWidth = getwidth();
-	int graphHeight = getheight();
-	int dstX = 0;
-
-	for (int iy = 0; iy < picture_height; iy++) {
-		for (int ix = 0; ix < picture_width; ix++) {
-			int srcX = ix + iy * picture_width;
-			int sa = ((src[srcX] & 0xff000000) >> 24);
-			int sr = ((src[srcX] & 0xff0000) >> 16);
-			int sg = ((src[srcX] & 0xff00) >> 8);
-			int sb = src[srcX] & 0xff;
-			if (ix >= 0 && ix <= graphWidth && iy >= 0 && iy <= graphHeight && dstX <= graphWidth * graphHeight) {
-				dstX = (ix + picX) + (iy + picY) * graphWidth;
-				int dr = ((dst[dstX] & 0xff0000) >> 16);
-				int dg = ((dst[dstX] & 0xff00) >> 8);
-				int db = dst[dstX] & 0xff;
-				draw[dstX] = ((sr * sa / 255 + dr * (255 - sa) / 255) << 16)
-					| ((sg * sa / 255 + dg * (255 - sa) / 255) << 8)
-					| (sb * sa / 255 + db * (255 - sa) / 255);
-			}
-		}
-	}
-}
 
 Gui::Gui() {
 	initgraph(900, 1000);
 	setbkcolor(RGB(255, 255, 255));
 	cleardevice();
 	loadAssets();
+	putimage(0, 0, &chessBoard);
 }
 
 void Gui::loadAssets() {
@@ -59,11 +32,10 @@ void Gui::loadAssets() {
 	loadimage(&blackRook, _T("./assets/black_rook.png"), CHESS_SIZE, CHESS_SIZE);
 }
 
-void Gui::initBoardDisplay() {
-	putimage(0, 0, &chessBoard);
-}
-
 void Gui::drawOnPosition(char sym, int x, int y) {
+	x = max(0, min(x, BOARD_WIDTH - CHESS_SIZE));
+	y = max(0, min(y, BOARD_HEIGHT - CHESS_SIZE));
+
 	switch (sym) {
 	case 'a': putAlphaImage(x, y, &blackAdvisor); break;
 	case 'b': putAlphaImage(x, y, &blackBishop); break;
@@ -82,9 +54,14 @@ void Gui::drawOnPosition(char sym, int x, int y) {
 	}
 }
 
-void Gui::drawFromFEN(std::string fen) {
+void Gui::drawFromFEN(std::string fen, int x, int y) {
+	BeginBatchDraw();
+	putimage(0, 0, &chessBoard);
+
+	std::vector<std::string> fs = split(fen, Space);
+
 	int file = 0, rank = 0;
-	for (char sym : fen) {
+	for (char sym : fs[0]) {
 		if (sym == '/') {
 			file = 0;
 			rank++;
@@ -99,8 +76,45 @@ void Gui::drawFromFEN(std::string fen) {
 			}
 		}
 	}
+
+	// holding chess
+	char sym = fs[2][0];
+	if (sym != NotAttached) {
+		drawOnPosition(sym, x, y);
+	}
+
+	FlushBatchDraw();
+	cleardevice();
+}
+
+/*
+*  get chess position clicked
+*  |  x  | + 1 |
+*  | + 9 | +10 |
+*/
+int Gui::getChessClick(int x, int y) {
+	int xPos = x / CHESS_SIZE;
+	int yPos = y / CHESS_SIZE;
+
+	std::vector<std::vector<int>> nearest = {
+		{xPos * CHESS_SIZE + MARGIN, yPos * CHESS_SIZE + MARGIN},
+		{(xPos + 1) * CHESS_SIZE + MARGIN, yPos * CHESS_SIZE + MARGIN},
+		{xPos * CHESS_SIZE + MARGIN, (yPos + 1) * CHESS_SIZE + MARGIN},
+		{(xPos + 1) * CHESS_SIZE + MARGIN, (yPos + 1) * CHESS_SIZE + MARGIN}
+	};
+
+	int chessClicked = NotClicked;
+	for (std::vector<int> xys : nearest) {
+		double dist = sqrt(pow(x - xys[0], 2) + pow(y - xys[1], 2));
+		if (dist < CHESS_RAD) {
+			chessClicked = (xys[0] / CHESS_SIZE) + 9 * (xys[1] / CHESS_SIZE);
+			return chessClicked;
+		}
+	}
+	return chessClicked;
 }
 
 void Gui::exitGui() {
+	EndBatchDraw();
 	closegraph();
 }

@@ -129,9 +129,11 @@
   <ItemGroup>
     <ClCompile Include="gui.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="utility.cpp" />
     <ClCompile Include="xiangqi.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="utility.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="xiangqi.h" />
   </ItemGroup>
