@@ -1,12 +1,14 @@
 #include <iostream>
 #include <sstream>
-#include <graphics.h>
 #include <vector>
+#include <graphics.h>
 #include <conio.h>
 #include "utility.h"
 #include "gui.h"
 
 Gui::Gui() {
+	curX = 0;
+	curY = 0;
 	initgraph(900, 1000);
 	setbkcolor(RGB(255, 255, 255));
 	cleardevice();
@@ -32,6 +34,11 @@ void Gui::loadAssets() {
 	loadimage(&blackRook, _T("./assets/black_rook.png"), CHESS_SIZE, CHESS_SIZE);
 }
 
+void Gui::setCursorPosition(int x, int y) {
+	curX = x;
+	curY = y;
+}
+
 void Gui::drawOnPosition(char sym, int x, int y) {
 	x = max(0, min(x, BOARD_WIDTH - CHESS_SIZE));
 	y = max(0, min(y, BOARD_HEIGHT - CHESS_SIZE));
@@ -54,7 +61,23 @@ void Gui::drawOnPosition(char sym, int x, int y) {
 	}
 }
 
-void Gui::drawFromFEN(std::string fen, int x, int y) {
+void Gui::drawValidMoves() {
+	for (int index : validMoves) {
+		// Attacking moves are added 128
+		if (index >= AttackingMove) {
+			setfillcolor(LIGHTBLUE);
+			index = index & (AttackingMove - 1);
+		}
+		else {
+			setfillcolor(YELLOW);
+		}
+		int x = (index % 9) * CHESS_SIZE + MARGIN;
+		int y = (index / 9) * CHESS_SIZE + MARGIN;
+		fillcircle(x, y, 10);
+	}
+}
+
+void Gui::drawFromFEN(std::string fen) {
 	BeginBatchDraw();
 	putimage(0, 0, &chessBoard);
 
@@ -77,10 +100,15 @@ void Gui::drawFromFEN(std::string fen, int x, int y) {
 		}
 	}
 
+	// draw valid moves
+	if (!validMoves.empty()) {
+		drawValidMoves();
+	}
+
 	// holding chess
 	char sym = fs[2][0];
 	if (sym != NotAttached) {
-		drawOnPosition(sym, x, y);
+		drawOnPosition(sym, curX, curY);
 	}
 
 	FlushBatchDraw();
@@ -112,6 +140,26 @@ int Gui::getChessClick(int x, int y) {
 		}
 	}
 	return chessClicked;
+}
+
+void Gui::clearValidMoves() {
+	validMoves.clear();
+}
+
+void Gui::setValidMoves(std::vector<int> moves) {
+	validMoves = moves;
+}
+
+bool Gui::isValidMove(int index) {
+	// check normal moves
+	if (std::count(validMoves.begin(), validMoves.end(), index) > 0) {
+		return true;
+	}
+	// check attacking moves
+	if (std::count(validMoves.begin(), validMoves.end(), index + AttackingMove) > 0) {
+		return true;
+	}
+	return false;
 }
 
 void Gui::exitGui() {

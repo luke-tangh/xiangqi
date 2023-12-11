@@ -21,7 +21,12 @@ enum Control {
 	RedTurn = 'r',
 	BlackTurn = 'b',
 	NotAttached = '.',
-	Space = ' '
+	Space = ' ',
+
+	// bitwise and magic number
+	GetPiece = 7,
+	GetColour = 24,
+	AttackingMove = 128
 };
 
 struct Chess {
