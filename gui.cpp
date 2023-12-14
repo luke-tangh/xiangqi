@@ -9,8 +9,16 @@
 Gui::Gui() {
 	curX = 0;
 	curY = 0;
-	initgraph(900, 1000);
+	chessPreviousPos = NotClicked;
+	sidebar = { 900, 0, 999, 999 };
+	gameTurnBar = { 900, 0, 999, 99 };
+	
+	initgraph(1000, 1000);
 	setbkcolor(RGB(255, 255, 255));
+	
+	settextcolor(BLACK);
+	settextstyle(20, 0, _T("Consolas"));
+
 	cleardevice();
 	loadAssets();
 	putimage(0, 0, &chessBoard);
@@ -39,6 +47,14 @@ void Gui::setCursorPosition(int x, int y) {
 	curY = y;
 }
 
+void Gui::setChessPreviousPos(int index) {
+	chessPreviousPos = index;
+}
+
+void Gui::clearChessPreviousPos() {
+	chessPreviousPos = NotClicked;
+}
+
 void Gui::drawOnPosition(char sym, int x, int y) {
 	x = max(0, min(x, BOARD_WIDTH - CHESS_SIZE));
 	y = max(0, min(y, BOARD_HEIGHT - CHESS_SIZE));
@@ -62,11 +78,13 @@ void Gui::drawOnPosition(char sym, int x, int y) {
 }
 
 void Gui::drawValidMoves() {
+	setlinecolor(WHITE);
+	setlinestyle(PS_SOLID, 1);
 	for (int index : validMoves) {
 		// Attacking moves are added 128
 		if (index >= AttackingMove) {
 			setfillcolor(LIGHTBLUE);
-			index = index & (AttackingMove - 1);
+			index -= AttackingMove;
 		}
 		else {
 			setfillcolor(YELLOW);
@@ -75,6 +93,45 @@ void Gui::drawValidMoves() {
 		int y = (index / 9) * CHESS_SIZE + MARGIN;
 		fillcircle(x, y, 10);
 	}
+}
+
+void Gui::drawNextTurnInfo(char turn) {
+	if (turn == RedTurn) {
+		TCHAR gameTurnInfo[] = _T("Next:\nRed");
+		drawtext(gameTurnInfo, &gameTurnBar, DT_CENTER);
+	}
+	else {
+		TCHAR gameTurnInfo[] = _T("Next:\nBlack");
+		drawtext(gameTurnInfo, &gameTurnBar, DT_CENTER);
+	}
+}
+
+void Gui::drawPreviousPosition() {
+	setlinecolor(RED);
+	setlinestyle(PS_SOLID, 3);
+	int x = (chessPreviousPos % 9) * CHESS_SIZE;
+	int y = (chessPreviousPos / 9) * CHESS_SIZE;
+	
+	// left up
+	x += GAP;
+	y += GAP;
+	line(x, y, x + 10, y);
+	line(x, y, x, y + 10);
+
+	// right up
+	x -= 2 * GAP;
+	line(x + 100, y, x + 90, y);
+	line(x + 100, y, x + 100, y + 10);
+	
+	// right down
+	y -= 2 * GAP;
+	line(x + 100, y + 100, x + 90, y + 100);
+	line(x + 100, y + 100, x + 100, y + 90);
+	
+	// left down
+	x += 2 * GAP;
+	line(x, y + 100, x, y + 90);
+	line(x, y + 100, x + 10, y + 100);
 }
 
 void Gui::drawFromFEN(std::string fen) {
@@ -110,6 +167,14 @@ void Gui::drawFromFEN(std::string fen) {
 	if (sym != NotAttached) {
 		drawOnPosition(sym, curX, curY);
 	}
+
+	// chess previous position
+	if (chessPreviousPos != NotClicked) {
+		drawPreviousPosition();
+	}
+
+	// draw information sidebar
+	drawNextTurnInfo(fs[1][0]);
 
 	FlushBatchDraw();
 	cleardevice();

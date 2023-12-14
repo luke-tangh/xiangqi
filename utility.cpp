@@ -49,3 +49,19 @@ void putAlphaImage(int picX, int picY, IMAGE* picture) {
 		}
 	}
 }
+
+void printFEN(std::string fen) {
+	for (auto ss : split(split(fen, ' ')[0], '/')) {
+		for (char c : ss) {
+			if (isdigit(c)) {
+				for (int i = 0; i < c - '0'; ++i) {
+					std::cout << '.' << ' ';
+				}
+			}
+			else {
+				std::cout << c << ' ';
+			}
+		}
+		std::cout << std::endl;
+	}
+}

@@ -1,12 +1,13 @@
 #pragma once
 #include <iostream>
 #include <vector>
+#include <unordered_set>
 #include <unordered_map>
 #include "utility.h"
 
 // Starting position expressed in FEN notation
-// But use { Q | q } for Kings
-// Use UPPER case for red and lower case for black
+// But use [ Q | q ] for Kings
+// Use lower case for black and UPPER case for red
 // { board | turn | holding chess } separated by SPACE 
 const std::string START_FEN = "rkbaqabkr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RKBAQABKR r .";
 
@@ -33,14 +34,25 @@ private:
 	char gameTurn;
 	Chess holdingChess;
 	std::vector<int> squares;
+	std::vector<int> redAtkPieces;
+	std::vector<int> blackAtkPieces;
 	std::vector<int> directMoves;
 	std::vector<int> slidingMoves;
 	std::vector<int> knightPosMoves;
-	std::unordered_map<int, int> chessPos;
+	// position of chess that attack rival king
+	std::unordered_set<int> attacks;
+	// position to resolve king check
+	std::vector<int> blockCheck;
+	// position that cannot move when king in check
+	std::unordered_set<int> freezedChess;
+	std::unordered_map<int, std::unordered_set<int>> chessPos;
 public:
 	Board();
 	bool isSameColour(int chessA, int chessB);
 	void reverseGameTurn();
+	int getCurrentGameTurn();
+	int getReversedPiece(int chess);
+	bool turnCheck(int index);
 	void initSquare();
 	void initChessPosMap();
 	void setChessPos(int index, int chess);
@@ -57,4 +69,7 @@ public:
 	std::vector<int> knightMoves(int index, int chess);
 	std::vector<int> pawnMoves(int index, int chess);
 	std::vector<int> rookMoves(int index, int chess);
+	std::vector<int> legalMoveGeneration(int index, int chess);
+	std::vector<int> attackMoves(int colour);
+	bool isKingInCheck(int king);
 };

@@ -23,7 +23,7 @@ enum Control {
 	NotAttached = '.',
 	Space = ' ',
 
-	// bitwise and magic number
+	// bitwise and - magic number
 	GetPiece = 7,
 	GetColour = 24,
 	AttackingMove = 128
@@ -40,6 +40,8 @@ const int CHESS_SIZE = 100;
 const int MARGIN = 50;
 // magic number - measured
 const int CHESS_RAD = 38;
+const int GAP = 10;
 
 std::vector<std::string> split(const std::string& s, char delim);
 void putAlphaImage(int picX, int picY, IMAGE* picture);
+void printFEN(std::string fen);
