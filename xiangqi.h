@@ -39,12 +39,6 @@ private:
 	std::vector<int> directMoves;
 	std::vector<int> slidingMoves;
 	std::vector<int> knightPosMoves;
-	// position of chess that attack rival king
-	std::unordered_set<int> attacks;
-	// position to resolve king check
-	std::vector<int> blockCheck;
-	// position that cannot move when king in check
-	std::unordered_set<int> freezedChess;
 	std::unordered_map<int, std::unordered_set<int>> chessPos;
 public:
 	Board();
@@ -71,5 +65,5 @@ public:
 	std::vector<int> rookMoves(int index, int chess);
 	std::vector<int> legalMoveGeneration(int index, int chess);
 	std::vector<int> attackMoves(int colour);
-	bool isKingInCheck(int king);
+	bool isKingFaces();
 };

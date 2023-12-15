@@ -64,8 +64,6 @@ bool Board::turnCheck(int index) {
 void Board::initSquare() {
 	squares.clear();
 	squares.resize(90, None);
-	attacks.clear();
-	blockCheck.resize(90, None);
 	gameTurn = RedTurn;
 	holdingChess = { NotClicked, None };
 }
@@ -457,6 +455,9 @@ std::vector<int> Board::legalMoveGeneration(int index, int chess) {
 		if (count(atk.begin(), atk.end(), *chessPos[King | kingColour].begin())) {
 			// king captured
 		}
+		else if (isKingFaces()) {
+			// king faces
+		}
 		else {
 			legalMoves.push_back(move);
 		}
@@ -493,176 +494,15 @@ std::vector<int> Board::attackMoves(int colour) {
 	return attackMoves;
 }
 
-bool Board::isKingInCheck(int king) {
-	int kingColour = king & GetColour;
-	int rivalColour = kingColour ^ GetColour;
-	int kingPos = *chessPos[king].begin();
-
-	attacks.clear();
-	blockCheck.resize(90, 0);
-	freezedChess.clear();
-
-	// pawn attack
-	for (int move : directMoves) {
-		int target = kingPos + move;
-		// no backward attack
-		if (kingColour == Black && move < -1) continue;
-		if (kingColour == Red && move > 1) continue;
-		// attack condition
-		if (squares[target] == (rivalColour | Pawn)) {
-			attacks.insert(target);
-		}
-	}
-
-	// knight attack
-	for (int i = 0; i < knightPosMoves.size(); ++i) {
-		std::vector<int> blockMoves = { -8, -10, -10, +8, +8, +10, +10, -8 };
-		int target = kingPos + knightPosMoves[i];
-		int block = kingPos + blockMoves[i];
-		// out of bound conditions
-		if (target < 0 || target > 89) continue;
-		// attack condition
-		if (squares[target] == (rivalColour | Knight)) {
-			attacks.insert(target);
-			// pieces block conditions
-			if (block > 0 && block < 90 && squares[block] != None) {
-				if ((squares[block] & GetColour) == kingColour) {
-					freezedChess.insert(block);
-				}
-			}
-			else {
-				// block check position
-				if (block > 0 && block < 90) {
-					blockCheck[block] += 1;
-				}
-			}
-		}
-	}
-
-	// rook attack
-	for (int move : directMoves) {
-		bool rookFind = false;
-		int blockPos = None;
-		int target = kingPos + move;
-
-		while (true) {
-			// out of bound conditions
-			if (target < 0 || target > 89) break;
-			if (target / 9 != kingPos / 9 && target % 9 != kingPos % 9) break;
-			// is rook find
-			if (squares[target] == (rivalColour | Rook)) {
-				rookFind = true;
-				break;
-			}
-			// pieces block conditions
-			if (squares[target] != None) {
-				if (isSameColour(squares[target], rivalColour)) {
-					break;
-				}
-				else {
-					if (blockPos == None) {
-						blockPos = target;
-					}
-					// exit if two or more pieces in between
-					else {
-						break;
-					}
-				}
-			}
-			target += move;
-		}
-
-		if (rookFind) {
-			attacks.insert(target);
-			if (blockPos != None) {
-				freezedChess.insert(blockPos);
-			}
-			else {
-				// back trace possible block moves
-				target -= move;
-				while (target != kingPos) {
-					blockCheck[target] += 1;
-					target -= move;
-				}
-			}
-		}
-	}
-
-	// cannon attack
-	for (int move : directMoves) {
-		int cannonFind = false;
-		int rivalCount = 0;
-		int target = kingPos + move;
-		std::vector<int> middlePieces;
-		
-		while (true) {
-			// out of bound conditions
-			if (target < 0 || target > 89) break;
-			if (target / 9 != kingPos / 9 && target % 9 != kingPos % 9) break;
-			if (squares[target] == (rivalColour | Cannon)) {
-				cannonFind = true;
-				break;
-			}
-			if (squares[target] != None) {
-				middlePieces.push_back(target);
-				if ((squares[target] & GetColour) == rivalColour) {
-					rivalCount += 1;
-				}
-			}
-			target += move;
-		}
-
-		if (cannonFind) {
-			if (middlePieces.size() > 2 || middlePieces.empty()) continue;
-			if (middlePieces.size() == 2) {
-				if (rivalCount == 2) continue;
-				if (rivalCount == 0) {
-					freezedChess.insert(middlePieces[0]);
-					freezedChess.insert(middlePieces[1]);
-				}
-				else {
-					// friendly chess freeze
-					if (kingColour == Red) {
-						freezedChess.insert(max(middlePieces[0], middlePieces[1]));
-					}
-					else {
-						freezedChess.insert(min(middlePieces[0], middlePieces[1]));
-					}
-				}
-				attacks.insert(target);
-			}
-			// if middlePieces.size() == 1:
-			else {
-				attacks.insert(target);
-				// friendly piece
-				int piece = middlePieces[0];
-				if ((piece & GetColour) == kingColour) {
-					blockCheck[piece] -= 1;
-				}
-				target = piece - move;
-				while (target != kingPos) {
-					blockCheck[target] += 1;
-					target -= move;
-				}
-				
-			}
-		}
-	}
-
-	std::cout << "attacks: " << '{' << ' ';
-	for (int a : attacks) {
-		std::cout << a << ' ';
-	}
-	std::cout << '}' << std::endl;
+bool Board::isKingFaces() {
+	int redKingPos = *chessPos[Red | King].begin();
+	int blackKingPos = *chessPos[Black | King].begin();
 	
-	std::cout << "defences: " << '{' << ' ';
-	for (int d : freezedChess) {
-		std::cout << d << ' ';
+	for (int i = blackKingPos + 9; i < redKingPos; i += 9) {
+		if (squares[i] != None) {
+			return false;
+		}
 	}
-	std::cout << '}' << std::endl;
-
-	int atk = attacks.size();
-	int def = freezedChess.size();
 	
-	return atk > 0 ? atk > def : false;
+	return true;
 }

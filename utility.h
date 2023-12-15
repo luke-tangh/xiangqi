@@ -2,7 +2,7 @@
 #include <graphics.h>
 #include <conio.h>
 
-enum Piece {
+enum PieceValue {
 	None = 0,
 	Advisor = 1,
 	Bishop = 2,
