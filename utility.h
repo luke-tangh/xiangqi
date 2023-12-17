@@ -1,4 +1,5 @@
 #pragma once
+#include <unordered_map>
 #include <graphics.h>
 #include <conio.h>
 
@@ -31,21 +32,12 @@ enum PieceValue {
 
 enum Control {
 	NotClicked = -1,
-	RedTurn = 'r',
-	BlackTurn = 'b',
-	NotAttached = '.',
+	NotAttached = -1,
 	Space = ' ',
 
 	// bitwise and - magic number
 	GetPiece = 7,
 	GetColour = 24,
-	PieceTypeMask = 15,
-	AttackingMove = 128
-};
-
-struct Chess {
-	int index;
-	int value;
 };
 
 const int BOARD_HEIGHT = 1000;
@@ -59,3 +51,14 @@ const int GAP = 10;
 std::vector<std::string> split(const std::string& s, char delim);
 void putAlphaImage(int picX, int picY, IMAGE* picture);
 void printFEN(std::string fen);
+
+class BaseBoard {
+public:
+	std::vector<int> squares;
+	std::unordered_map<int, char> fenIntToChar;
+	std::unordered_map<char, int> fenCharToInt;
+	
+	BaseBoard();
+	void readFromFEN(std::string fen);
+	std::string convertToFEN();
+};

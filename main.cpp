@@ -7,15 +7,17 @@ int main() {
     std::unique_ptr<Board> pB(new Board);
     std::unique_ptr<Gui> pG(new Gui);
 
-    pG->drawFromFEN(START_FEN);
     pB->readFromFEN(START_FEN);
     pB->initChessPosMap();
+    pG->drawFromBoard(pB->getSquares());
 
 	ExMessage m;
     bool exit = false;
     bool chessAttached = false;
     int chessClicked = NotClicked;
-    Chess hold;
+    int holdChessVal = -1;
+    int holdChessPos = -1;
+    char gameTurn = Red;
 
     while (not exit) {
         m = getmessage(EX_MOUSE | EX_KEY);
@@ -30,26 +32,26 @@ int main() {
             // drop a chess
             if (chessAttached) {
                 if (!pG->isValidMove(chessClicked)) break;
-                hold = pB->getHoldingChess();
-                pB->clearHoldingChess();
-                pB->setChessPos(chessClicked, hold.value);
-                pB->reverseGameTurn();
-                pG->setChessPreviousPos(hold.index);
-                pG->clearValidMoves();
-                pG->drawFromFEN(pB->convertToFEN());
+                pB->setChessPos(chessClicked, holdChessVal);
+                // reverse game turn
+                gameTurn ^= GetColour;
+                pG->setLastMove(holdChessPos);
+                pG->nextRound(gameTurn);
+                pG->drawFromBoard(pB->getSquares());
                 chessAttached = false;
             }
             // select a chess
             else {
-                // turn check
-                if (!pB->turnCheck(chessClicked)) break;
-                pB->setHoldingChess(chessClicked);
+                if (gameTurn != (pB->getChessOnPos(chessClicked) & GetColour)) break;
+                // update holding chess info
+                holdChessVal = pB->getChessOnPos(chessClicked);
+                holdChessPos = chessClicked;
                 pB->setChessPos(chessClicked, None);
+                pG->setHoldChess(holdChessVal);
                 pG->setCursorPosition(m.x - MARGIN, m.y - MARGIN);
                 // get valid moves
-                hold = pB->getHoldingChess();
-                pG->setValidMoves(pB->legalMoveGeneration(hold.index, hold.value));
-                pG->drawFromFEN(pB->convertToFEN());
+                pG->setValidMoves(pB->legalMoveGeneration(holdChessPos, holdChessVal));
+                pG->drawFromBoard(pB->getSquares());
                 chessAttached = true;
             }
             break;
@@ -57,16 +59,14 @@ int main() {
         case WM_MOUSEMOVE:
             if (not chessAttached) break;
             pG->setCursorPosition(m.x - MARGIN, m.y - MARGIN);
-            pG->drawFromFEN(pB->convertToFEN());
+            pG->drawFromBoard(pB->getSquares());
             break;
         // cancel move
         case WM_RBUTTONDOWN:
             if (!chessAttached) break;
-            hold = pB->getHoldingChess();
-            pB->clearHoldingChess();
-            pB->setChessPos(hold.index, hold.value);
-            pG->clearValidMoves();
-            pG->drawFromFEN(pB->convertToFEN());
+            pB->setChessPos(holdChessPos, holdChessVal);
+            pG->nextRound(gameTurn);
+            pG->drawFromBoard(pB->getSquares());
             chessAttached = false;
             break;
         }

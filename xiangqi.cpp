@@ -29,44 +29,17 @@ bool Board::isSameColour(int chessA, int chessB) {
 	return (chessA & GetColour) == (chessB & GetColour);
 }
 
-void Board::reverseGameTurn() {
-	if (gameTurn == BlackTurn) {
-		gameTurn = RedTurn;
-	}
-	else {
-		gameTurn = BlackTurn;
-	}
+std::vector<int> Board::getSquares() {
+	return squares;
 }
 
-int Board::getCurrentGameTurn() {
-	if (gameTurn == BlackTurn) {
-		return Black;
-	}
-	else {
-		return Red;
-	}
-}
-
-int Board::getReversedPiece(int chess) {
-	return chess & GetColour ^ GetColour | chess & GetPiece;
-}
-
-// if the chess clicked is turn to move
-bool Board::turnCheck(int index) {
-	if (gameTurn == BlackTurn) {
-		return (squares[index] & GetColour) == Black;
-	}
-	else {
-		return (squares[index] & GetColour) == Red;
-	}
+char Board::getChessOnPos(int index) {
+	return squares[index];
 }
 
 // initialise board to the start of game
 void Board::initSquare() {
-	squares.clear();
 	squares.resize(90, None);
-	gameTurn = RedTurn;
-	holdingChess = { NotClicked, None };
 }
 
 // read content in `squares` to map `chessPos`
@@ -94,107 +67,6 @@ void Board::setChessPos(int index, int chess) {
 	}
 }
 
-void Board::setHoldingChess(int index) {
-	holdingChess = { index, squares[index] };
-}
-
-void Board::clearHoldingChess() {
-	holdingChess = { NotClicked, None };
-}
-
-Chess Board::getHoldingChess() {
-	return holdingChess;
-}
-
-void Board::readFromFEN(std::string fen) {
-	std::unordered_map<char, int> fenCharToInt {
-		{'A', Red | Advisor}, {'a', Black | Advisor},
-		{'B', Red | Bishop}, {'b', Black | Bishop},
-		{'C', Red | Cannon}, {'c', Black | Cannon},
-		{'K', Red | King}, {'k', Black | King},
-		{'N', Red | Knight}, {'n', Black | Knight},
-		{'P', Red | Pawn}, {'p', Black | Pawn},
-		{'R', Red | Rook}, {'r', Black | Rook}
-	};
-
-	std::vector<std::string> fs = split(fen, Space);
-
-	// chess board
-	int file = 0, rank = 0;
-	for (char sym : fs[0]) {
-		if (sym == '/') {
-			file = 0;
-			rank++;
-		}
-		else {
-			if (isdigit(sym)) {
-				file += sym - '0';
-			}
-			else {
-				squares[rank * 9 + file] = fenCharToInt[sym];
-				file++;
-			}
-		}
-	}
-
-	// modify game turn
-	gameTurn = fs[1][0];
-}
-
-std::string Board::convertToFEN() {
-	std::unordered_map<int, char> fenIntToChar {
-	{Red | Advisor, 'A'}, {Black | Advisor, 'a'},
-	{Red | Bishop, 'B'}, {Black | Bishop, 'b'},
-	{Red | Cannon, 'C'}, {Black | Cannon, 'c'},
-	{Red | King, 'K'}, {Black | King, 'k'},
-	{Red | Knight, 'N'}, {Black | Knight, 'n'},
-	{Red | Pawn, 'P'}, {Black | Pawn, 'p'},
-	{Red | Rook, 'R'}, {Black | Rook, 'r'}
-	};
-
-	// chess board
-	std::string fen = "";
-	for (int i = 0; i < 10; ++i) {
-		int acc = 0;
-		for (int j = 0; j < 9; ++j) {
-			int index = i * 9 + j;
-			if (squares[index] == 0) {
-				acc++;
-			}
-			else {
-				if (acc != 0) {
-					fen += acc + '0';
-					acc = 0;
-				}
-				fen += fenIntToChar[squares[index]];
-			}
-		}
-		if (acc != 0) {
-			fen += acc + '0';
-		}
-		fen += '/';
-	}
-
-	// remove redundant '/' at the end
-	fen.pop_back();
-
-	// game turn
-	fen += Space;
-	fen += gameTurn;
-
-	// holding chess
-	if (holdingChess.value != None) {
-		fen += Space;
-		fen += fenIntToChar[holdingChess.value];
-	}
-	else {
-		fen += Space;
-		fen += NotAttached;
-	}
-
-	return fen;
-}
-
 std::vector<int> Board::moveGeneration(int index, int chess) {
 	const int piece = chess & GetPiece;
 	switch (piece) {
@@ -219,13 +91,7 @@ std::vector<int> Board::advisorMoves(int index, int chess) {
 		if (target / 9 > 2 && target / 9 < 7) continue;
 		// friendly pieces block
 		if (isSameColour(squares[target], chess)) continue;
-		// attacking moves
-		if (squares[target] != None) {
-			validMoves.push_back(target + AttackingMove);
-		}
-		else {
-			validMoves.push_back(target);
-		}
+		validMoves.push_back(target);
 	}
 	return validMoves;
 }
@@ -243,13 +109,7 @@ std::vector<int> Board::bishopMoves(int index, int chess) {
 		if (squares[block] != None) continue;
 		// friendly pieces block
 		if (isSameColour(squares[target], chess)) continue;
-		// attacking moves
-		if (squares[target] != None) {
-			validMoves.push_back(target + AttackingMove);
-		}
-		else {
-			validMoves.push_back(target);
-		}
+		validMoves.push_back(target);
 	}
 	return validMoves;
 }
@@ -271,9 +131,8 @@ std::vector<int> Board::cannonMoves(int index, int chess) {
 			if (mount) {
 				// friendly pieces block conditions
 				if (isSameColour(squares[target], chess)) break;
-				// attacking moves
 				if (squares[target] != None) {
-					validMoves.push_back(target + AttackingMove);
+					validMoves.push_back(target);
 					break;
 				}
 			}
@@ -296,27 +155,7 @@ std::vector<int> Board::kingMoves(int index, int chess) {
 		if (target / 9 > 2 && target / 9 < 7) continue;
 		// friendly pieces block conditions
 		if (isSameColour(squares[target], chess)) continue;
-		// king-face-king condition
-		int mapKingPos = *chessPos[getReversedPiece(chess)].begin();
-		int redKingPos = max(target, mapKingPos);
-		int blackKingPos = min(target, mapKingPos);
-		if (redKingPos % 9 == blackKingPos % 9) {
-			bool block = false;
-			for (int i = blackKingPos + 9; i < redKingPos; i += 9) {
-				if (squares[i] != None) {
-					block = true;
-					break;
-				}
-			}
-			if (!block) continue;
-		}
-		// attacking moves
-		if (squares[target] != None) {
-			validMoves.push_back(target + AttackingMove);
-		}
-		else {
-			validMoves.push_back(target);
-		}
+		validMoves.push_back(target);
 	}
 	return validMoves;
 }
@@ -333,13 +172,7 @@ std::vector<int> Board::knightMoves(int index, int chess) {
 		if (block > 0 && block < 90 && squares[block] != None) continue;
 		// friendly pieces block conditions
 		if (isSameColour(squares[target], chess)) continue;
-		// attacking moves
-		if (squares[target] != None) {
-			validMoves.push_back(target + AttackingMove);
-		}
-		else {
-			validMoves.push_back(target);
-		}
+		validMoves.push_back(target);
 	}
 	return validMoves;
 }
@@ -351,13 +184,7 @@ std::vector<int> Board::pawnMoves(int index, int chess) {
 		// not passing river
 		if (index < 45) {
 			target = index + 9;
-			// attacking moves
-			if (squares[target] != None) {
-				validMoves.push_back(target + AttackingMove);
-			}
-			else {
-				validMoves.push_back(target);
-			}
+			validMoves.push_back(target);
 			return validMoves;
 		}
 		for (int move : directMoves) {
@@ -369,13 +196,7 @@ std::vector<int> Board::pawnMoves(int index, int chess) {
 			if (target / 9 != index / 9 && target % 9 != index % 9) continue;
 			// friendly pieces block conditions
 			if (isSameColour(squares[target], chess)) continue;
-			// attacking moves
-			if (squares[target] != None) {
-				validMoves.push_back(target + AttackingMove);
-			}
-			else {
-				validMoves.push_back(target);
-			}
+			validMoves.push_back(target);
 		}
 		return validMoves;
 	}
@@ -383,13 +204,7 @@ std::vector<int> Board::pawnMoves(int index, int chess) {
 		// not passing river
 		if (index > 44) {
 			target = index - 9;
-			// attacking moves
-			if (squares[target] != None) {
-				validMoves.push_back(target + AttackingMove);
-			}
-			else {
-				validMoves.push_back(target);
-			}
+			validMoves.push_back(target);
 			return validMoves;
 		}
 		for (int move : directMoves) {
@@ -401,13 +216,7 @@ std::vector<int> Board::pawnMoves(int index, int chess) {
 			if (target / 9 != index / 9 && target % 9 != index % 9) continue;
 			// friendly pieces block conditions
 			if (isSameColour(squares[target], chess)) continue;
-			// attacking moves
-			if (squares[target] != None) {
-				validMoves.push_back(target + AttackingMove);
-			}
-			else {
-				validMoves.push_back(target);
-			}
+			validMoves.push_back(target);
 		}
 		return validMoves;
 	}
@@ -423,9 +232,8 @@ std::vector<int> Board::rookMoves(int index, int chess) {
 			if (target / 9 != index / 9 && target % 9 != index % 9) break;
 			// friendly pieces block conditions
 			if (isSameColour(squares[target], chess)) break;
-			// attacking moves
 			if (squares[target] != None) {
-				validMoves.push_back(target + AttackingMove);
+				validMoves.push_back(target);
 				break;
 			}
 			else {
@@ -440,25 +248,18 @@ std::vector<int> Board::rookMoves(int index, int chess) {
 std::vector<int> Board::legalMoveGeneration(int index, int chess) {
 	std::vector<int> pseudoLegalMoves = moveGeneration(index, chess);
 	std::vector<int> legalMoves;
-	int thisMove = 0;
 	int kingColour = chess & GetColour;
 	int rivalColour = kingColour ^ GetColour;
 	for (int move : pseudoLegalMoves) {
-		if (move >= AttackingMove) {
-			thisMove = move - AttackingMove;
-		}
-		else {
-			thisMove = move;
-		}
-		int target = squares[thisMove];
-		setChessPos(thisMove, chess);
+		int target = squares[move];
+		setChessPos(move, chess);
 		if (isKingInCheck(kingColour | King)) {
 			// king captured
 		}
 		else {
 			legalMoves.push_back(move);
 		}
-		setChessPos(thisMove, target);
+		setChessPos(move, target);
 	}
 	return legalMoves;
 }
@@ -466,13 +267,17 @@ std::vector<int> Board::legalMoveGeneration(int index, int chess) {
 bool Board::isKingFaces() {
 	int redKingPos = *chessPos[Red | King].begin();
 	int blackKingPos = *chessPos[Black | King].begin();
-	
+
+	if (redKingPos % 9 != blackKingPos % 9) {
+		return false;
+	}
+
 	for (int i = blackKingPos + 9; i < redKingPos; i += 9) {
 		if (squares[i] != None) {
 			return false;
 		}
 	}
-	
+
 	return true;
 }
 
@@ -484,6 +289,7 @@ bool Board::isKingInCheck(int king) {
 	if (isKingFaces()) {
 		return true;
 	}
+
 
 	// pawn attack
 	for (int move : directMoves) {

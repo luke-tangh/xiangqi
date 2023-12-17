@@ -9,7 +9,10 @@
 Gui::Gui() {
 	curX = 0;
 	curY = 0;
-	chessPreviousPos = NotClicked;
+	lastMove = NotClicked;
+	holdChess = NotClicked;
+	gameTurn = Red;
+
 	sidebar = { 900, 0, 999, 999 };
 	gameTurnBar = { 900, 0, 999, 99 };
 	
@@ -47,48 +50,53 @@ void Gui::setCursorPosition(int x, int y) {
 	curY = y;
 }
 
-void Gui::setChessPreviousPos(int index) {
-	chessPreviousPos = index;
+void Gui::setHoldChess(int chess) {
+	holdChess = chess;
 }
 
-void Gui::clearChessPreviousPos() {
-	chessPreviousPos = NotClicked;
+void Gui::clearHoldChess() {
+	holdChess = NotAttached;
 }
 
-void Gui::drawOnPosition(char sym, int x, int y) {
+void Gui::setLastMove(int index) {
+	lastMove = index;
+}
+
+// clear holdChess and validMoves
+// set gameTurn to turn
+void Gui::nextRound(int turn) {
+	clearHoldChess();
+	clearValidMoves();
+	gameTurn = turn;
+}
+
+void Gui::drawOnPosition(int chess, int x, int y) {
 	x = max(0, min(x, BOARD_WIDTH - CHESS_SIZE));
 	y = max(0, min(y, BOARD_HEIGHT - CHESS_SIZE));
 
-	switch (sym) {
-	case 'a': putAlphaImage(x, y, &blackAdvisor); break;
-	case 'b': putAlphaImage(x, y, &blackBishop); break;
-	case 'c': putAlphaImage(x, y, &blackCannon); break;
-	case 'k': putAlphaImage(x, y, &blackKing); break;
-	case 'n': putAlphaImage(x, y, &blackKnight); break;
-	case 'p': putAlphaImage(x, y, &blackPawn); break;
-	case 'r': putAlphaImage(x, y, &blackRook); break;
-	case 'A': putAlphaImage(x, y, &redAdvisor); break;
-	case 'B': putAlphaImage(x, y, &redBishop); break;
-	case 'C': putAlphaImage(x, y, &redCannon); break;
-	case 'K': putAlphaImage(x, y, &redKing); break;
-	case 'N': putAlphaImage(x, y, &redKnight); break;
-	case 'P': putAlphaImage(x, y, &redPawn); break;
-	case 'R': putAlphaImage(x, y, &redRook); break;
+	switch (chess) {
+	case Black | Advisor : putAlphaImage(x, y, &blackAdvisor); break;
+	case Black | Bishop  : putAlphaImage(x, y, &blackBishop);  break;
+	case Black | Cannon  : putAlphaImage(x, y, &blackCannon);  break;
+	case Black | King    : putAlphaImage(x, y, &blackKing);    break;
+	case Black | Knight  : putAlphaImage(x, y, &blackKnight);  break;
+	case Black | Pawn    : putAlphaImage(x, y, &blackPawn);    break;
+	case Black | Rook    : putAlphaImage(x, y, &blackRook);    break;
+	case Red   | Advisor : putAlphaImage(x, y, &redAdvisor);   break;
+	case Red   | Bishop  : putAlphaImage(x, y, &redBishop);    break;
+	case Red   | Cannon  : putAlphaImage(x, y, &redCannon);    break;
+	case Red   | King    : putAlphaImage(x, y, &redKing);      break;
+	case Red   | Knight  : putAlphaImage(x, y, &redKnight);    break;
+	case Red   | Pawn    : putAlphaImage(x, y, &redPawn);      break;
+	case Red   | Rook    : putAlphaImage(x, y, &redRook);      break;
 	}
 }
 
 void Gui::drawValidMoves() {
 	setlinecolor(WHITE);
 	setlinestyle(PS_SOLID, 1);
+	setfillcolor(YELLOW);
 	for (int index : validMoves) {
-		// Attacking moves are added 128
-		if (index >= AttackingMove) {
-			setfillcolor(LIGHTBLUE);
-			index -= AttackingMove;
-		}
-		else {
-			setfillcolor(YELLOW);
-		}
 		int x = (index % 9) * CHESS_SIZE + MARGIN;
 		int y = (index / 9) * CHESS_SIZE + MARGIN;
 		fillcircle(x, y, 10);
@@ -96,7 +104,7 @@ void Gui::drawValidMoves() {
 }
 
 void Gui::drawNextTurnInfo(char turn) {
-	if (turn == RedTurn) {
+	if (turn == Red) {
 		TCHAR gameTurnInfo[] = _T("Next:\nRed");
 		drawtext(gameTurnInfo, &gameTurnBar, DT_CENTER);
 	}
@@ -109,8 +117,8 @@ void Gui::drawNextTurnInfo(char turn) {
 void Gui::drawPreviousPosition() {
 	setlinecolor(RED);
 	setlinestyle(PS_SOLID, 3);
-	int x = (chessPreviousPos % 9) * CHESS_SIZE;
-	int y = (chessPreviousPos / 9) * CHESS_SIZE;
+	int x = (lastMove % 9) * CHESS_SIZE;
+	int y = (lastMove / 9) * CHESS_SIZE;
 	
 	// left up
 	x += GAP;
@@ -134,47 +142,33 @@ void Gui::drawPreviousPosition() {
 	line(x, y + 100, x + 10, y + 100);
 }
 
-void Gui::drawFromFEN(std::string fen) {
+void Gui::drawFromBoard(std::vector<int> squares) {
 	BeginBatchDraw();
 	putimage(0, 0, &chessBoard);
 
-	std::vector<std::string> fs = split(fen, Space);
-
-	int file = 0, rank = 0;
-	for (char sym : fs[0]) {
-		if (sym == '/') {
-			file = 0;
-			rank++;
-		}
-		else {
-			if (isdigit(sym)) {
-				file += sym - '0';
-			}
-			else {
-				drawOnPosition(sym, file * 100, rank * 100);
-				file++;
-			}
-		}
+	for (int i = 0; i < squares.size(); ++i) {
+		int file = i % 9;
+		int rank = i / 9;
+		drawOnPosition(squares[i], file * 100, rank * 100);
 	}
-
+	
 	// draw valid moves
 	if (!validMoves.empty()) {
 		drawValidMoves();
 	}
 
 	// holding chess
-	char sym = fs[2][0];
-	if (sym != NotAttached) {
-		drawOnPosition(sym, curX, curY);
+	if (holdChess != NotAttached) {
+		drawOnPosition(holdChess, curX, curY);
 	}
 
 	// chess previous position
-	if (chessPreviousPos != NotClicked) {
+	if (lastMove != NotClicked) {
 		drawPreviousPosition();
 	}
 
 	// draw information sidebar
-	drawNextTurnInfo(fs[1][0]);
+	drawNextTurnInfo(gameTurn);
 
 	FlushBatchDraw();
 	cleardevice();
@@ -216,15 +210,7 @@ void Gui::setValidMoves(std::vector<int> moves) {
 }
 
 bool Gui::isValidMove(int index) {
-	// check normal moves
-	if (std::count(validMoves.begin(), validMoves.end(), index) > 0) {
-		return true;
-	}
-	// check attacking moves
-	if (std::count(validMoves.begin(), validMoves.end(), index + AttackingMove) > 0) {
-		return true;
-	}
-	return false;
+	return std::count(validMoves.begin(), validMoves.end(), index) > 0;
 }
 
 void Gui::exitGui() {

@@ -7,8 +7,7 @@
 
 // Starting position expressed in FEN notation
 // Use lower case for black and UPPER case for red
-// { board | turn | holding chess } separated by SPACE 
-const std::string START_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r .";
+const std::string START_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR";
 
 /* squares (index to position)
 * --------------------------
@@ -28,11 +27,8 @@ const std::string START_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9
 *     | + 8 | + 9 | +10 |
 */
 
-class Board {
+class Board: public BaseBoard {
 private:
-	char gameTurn;
-	Chess holdingChess;
-	std::vector<int> squares;
 	std::vector<int> redAtkPieces;
 	std::vector<int> blackAtkPieces;
 	std::vector<int> directMoves;
@@ -40,22 +36,9 @@ private:
 	std::vector<int> knightPosMoves;
 	std::vector<int> reverseKnightBlocks;
 	std::unordered_map<int, std::unordered_set<int>> chessPos;
-public:
-	Board();
+
+	bool isKingFaces();
 	bool isSameColour(int chessA, int chessB);
-	void reverseGameTurn();
-	int getCurrentGameTurn();
-	int getReversedPiece(int chess);
-	bool turnCheck(int index);
-	void initSquare();
-	void initChessPosMap();
-	void setChessPos(int index, int chess);
-	void clearHoldingChess();
-	void setHoldingChess(int index);
-	Chess getHoldingChess();
-	void readFromFEN(std::string fen);
-	std::string convertToFEN();
-	std::vector<int> moveGeneration(int index, int chess);
 	std::vector<int> advisorMoves(int index, int chess);
 	std::vector<int> bishopMoves(int index, int chess);
 	std::vector<int> cannonMoves(int index, int chess);
@@ -63,7 +46,15 @@ public:
 	std::vector<int> knightMoves(int index, int chess);
 	std::vector<int> pawnMoves(int index, int chess);
 	std::vector<int> rookMoves(int index, int chess);
+	std::vector<int> moveGeneration(int index, int chess);
+
+public:
+	Board();
+	void initSquare();
+	void initChessPosMap();
+	std::vector<int> getSquares();
+	char getChessOnPos(int index);
+	void setChessPos(int index, int chess);
 	std::vector<int> legalMoveGeneration(int index, int chess);
-	bool isKingFaces();
 	bool isKingInCheck(int king);
 };
