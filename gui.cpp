@@ -63,15 +63,15 @@ void Gui::drawOnPosition(char sym, int x, int y) {
 	case 'a': putAlphaImage(x, y, &blackAdvisor); break;
 	case 'b': putAlphaImage(x, y, &blackBishop); break;
 	case 'c': putAlphaImage(x, y, &blackCannon); break;
-	case 'q': putAlphaImage(x, y, &blackKing); break;
-	case 'k': putAlphaImage(x, y, &blackKnight); break;
+	case 'k': putAlphaImage(x, y, &blackKing); break;
+	case 'n': putAlphaImage(x, y, &blackKnight); break;
 	case 'p': putAlphaImage(x, y, &blackPawn); break;
 	case 'r': putAlphaImage(x, y, &blackRook); break;
 	case 'A': putAlphaImage(x, y, &redAdvisor); break;
 	case 'B': putAlphaImage(x, y, &redBishop); break;
 	case 'C': putAlphaImage(x, y, &redCannon); break;
-	case 'Q': putAlphaImage(x, y, &redKing); break;
-	case 'K': putAlphaImage(x, y, &redKnight); break;
+	case 'K': putAlphaImage(x, y, &redKing); break;
+	case 'N': putAlphaImage(x, y, &redKnight); break;
 	case 'P': putAlphaImage(x, y, &redPawn); break;
 	case 'R': putAlphaImage(x, y, &redRook); break;
 	}

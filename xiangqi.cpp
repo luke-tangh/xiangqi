@@ -21,6 +21,7 @@ Board::Board() {
 	directMoves = { -9, -1, +9, +1 };
 	slidingMoves = { -10, +8, +10, -8 };
 	knightPosMoves = { -17, -19, -11, +7, +17, +19, +11, -7 };
+	reverseKnightBlocks = { -8, -10, -10, +8, +8, +10, +10, -8 };
 	initSquare();
 }
 
@@ -110,8 +111,8 @@ void Board::readFromFEN(std::string fen) {
 		{'A', Red | Advisor}, {'a', Black | Advisor},
 		{'B', Red | Bishop}, {'b', Black | Bishop},
 		{'C', Red | Cannon}, {'c', Black | Cannon},
-		{'Q', Red | King}, {'q', Black | King},
-		{'K', Red | Knight}, {'k', Black | Knight},
+		{'K', Red | King}, {'k', Black | King},
+		{'N', Red | Knight}, {'n', Black | Knight},
 		{'P', Red | Pawn}, {'p', Black | Pawn},
 		{'R', Red | Rook}, {'r', Black | Rook}
 	};
@@ -145,8 +146,8 @@ std::string Board::convertToFEN() {
 	{Red | Advisor, 'A'}, {Black | Advisor, 'a'},
 	{Red | Bishop, 'B'}, {Black | Bishop, 'b'},
 	{Red | Cannon, 'C'}, {Black | Cannon, 'c'},
-	{Red | King, 'Q'}, {Black | King, 'q'},
-	{Red | Knight, 'K'}, {Black | Knight, 'k'},
+	{Red | King, 'K'}, {Black | King, 'k'},
+	{Red | Knight, 'N'}, {Black | Knight, 'n'},
 	{Red | Pawn, 'P'}, {Black | Pawn, 'p'},
 	{Red | Rook, 'R'}, {Black | Rook, 'r'}
 	};
@@ -451,12 +452,8 @@ std::vector<int> Board::legalMoveGeneration(int index, int chess) {
 		}
 		int target = squares[thisMove];
 		setChessPos(thisMove, chess);
-		std::vector<int> atk = attackMoves(rivalColour);
-		if (count(atk.begin(), atk.end(), *chessPos[King | kingColour].begin())) {
+		if (isKingInCheck(kingColour | King)) {
 			// king captured
-		}
-		else if (isKingFaces()) {
-			// king faces
 		}
 		else {
 			legalMoves.push_back(move);
@@ -464,34 +461,6 @@ std::vector<int> Board::legalMoveGeneration(int index, int chess) {
 		setChessPos(thisMove, target);
 	}
 	return legalMoves;
-}
-
-std::vector<int> Board::attackMoves(int colour) {
-	std::vector<int> attackMoves;
-	if (colour == Red) {
-		for (int p : redAtkPieces) {
-			for (auto it = chessPos[p].begin(); it != chessPos[p].end(); it++) {
-				for (int m : moveGeneration(*it, p)) {
-					if (m >= AttackingMove) {
-						attackMoves.push_back(m - AttackingMove);
-					}
-				}
-			}
-		}
-	}
-	else {
-		for (int p : blackAtkPieces) {
-			for (auto it = chessPos[p].begin(); it != chessPos[p].end(); it++) {
-				for (int m : moveGeneration(*it, p)) {
-					if (m >= AttackingMove) {
-						attackMoves.push_back(m - AttackingMove);
-					}
-				}
-			}
-		}
-	}
-	
-	return attackMoves;
 }
 
 bool Board::isKingFaces() {
@@ -505,4 +474,92 @@ bool Board::isKingFaces() {
 	}
 	
 	return true;
+}
+
+bool Board::isKingInCheck(int king) {
+	int kingColour = king & GetColour;
+	int rivalColour = kingColour ^ GetColour;
+	int kingPos = *chessPos[king].begin();
+
+	if (isKingFaces()) {
+		return true;
+	}
+
+	// pawn attack
+	for (int move : directMoves) {
+		int target = kingPos + move;
+		// no backward attack
+		if (kingColour == Black && move < -1) continue;
+		if (kingColour == Red && move > 1) continue;
+		// attack condition
+		if (squares[target] == (rivalColour | Pawn)) {
+			return true;
+		}
+	}
+
+	// knight attack
+	for (int i = 0; i < knightPosMoves.size(); ++i) {
+		int target = kingPos + knightPosMoves[i];
+		int block = kingPos + reverseKnightBlocks[i];
+		// out of bound conditions
+		if (target < 0 || target > 89) continue;
+		// pieces block conditions
+		if (block > 0 && block < 90 && squares[block] != None) continue;
+		// attack condition
+		if (squares[target] == (rivalColour | Knight)) {
+			return true;
+		}
+	}
+
+	// rook attack
+	for (int move : directMoves) {
+		int target = kingPos + move;
+
+		while (true) {
+			// out of bound conditions
+			if (target < 0 || target > 89) break;
+			if (target / 9 != kingPos / 9 && target % 9 != kingPos % 9) break;
+			// is rook find
+			if (squares[target] == (rivalColour | Rook)) {
+				return true;
+			}
+			// pieces block conditions
+			if (squares[target] != None) {
+				break;
+			}
+			target += move;
+		}
+	}
+
+	// cannon attack
+	for (int move : directMoves) {
+		bool cannonFind = false;
+		bool mount = false;
+		int target = kingPos + move;
+
+		while (true) {
+			// out of bound conditions
+			if (target < 0 || target > 89) break;
+			if (target / 9 != kingPos / 9 && target % 9 != kingPos % 9) break;
+			if (squares[target] == (rivalColour | Cannon)) {
+				cannonFind = true;
+				break;
+			}
+			if (squares[target] != None) {
+				if (mount) {
+					break;
+				}
+				else {
+					mount = true;
+				}
+			}
+			target += move;
+		}
+
+		if (cannonFind && mount) {
+			return true;
+		}
+	}
+
+	return false;
 }

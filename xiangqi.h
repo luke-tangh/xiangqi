@@ -6,10 +6,9 @@
 #include "utility.h"
 
 // Starting position expressed in FEN notation
-// But use [ Q | q ] for Kings
 // Use lower case for black and UPPER case for red
 // { board | turn | holding chess } separated by SPACE 
-const std::string START_FEN = "rkbaqabkr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RKBAQABKR r .";
+const std::string START_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR r .";
 
 /* squares (index to position)
 * --------------------------
@@ -39,6 +38,7 @@ private:
 	std::vector<int> directMoves;
 	std::vector<int> slidingMoves;
 	std::vector<int> knightPosMoves;
+	std::vector<int> reverseKnightBlocks;
 	std::unordered_map<int, std::unordered_set<int>> chessPos;
 public:
 	Board();
@@ -64,6 +64,6 @@ public:
 	std::vector<int> pawnMoves(int index, int chess);
 	std::vector<int> rookMoves(int index, int chess);
 	std::vector<int> legalMoveGeneration(int index, int chess);
-	std::vector<int> attackMoves(int colour);
 	bool isKingFaces();
+	bool isKingInCheck(int king);
 };

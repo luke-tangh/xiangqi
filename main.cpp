@@ -36,10 +36,6 @@ int main() {
                 pB->reverseGameTurn();
                 pG->setChessPreviousPos(hold.index);
                 pG->clearValidMoves();
-
-                // std::cout << "is red in check? " << pB->isKingInCheck(Red | King) << std::endl;
-                // std::cout << "is black in check? " << pB->isKingInCheck(Black | King) << std::endl;
-                
                 pG->drawFromFEN(pB->convertToFEN());
                 chessAttached = false;
             }

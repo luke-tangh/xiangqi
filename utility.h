@@ -2,7 +2,11 @@
 #include <graphics.h>
 #include <conio.h>
 
-enum PieceValue {
+enum PieceIndex {
+	// the value of piece is the result of bitwise OR
+	// for example the second black cannon is
+	// Black | Cannon
+	// = 32 + 16 + 3 = 51 = 0011 0011
 	None = 0,
 	Advisor = 1,
 	Bishop = 2,
@@ -13,7 +17,16 @@ enum PieceValue {
 	Rook = 7,
 
 	Red = 8,
-	Black = 16
+	Black = 16,
+};
+
+enum PieceValue {
+	AdvisorValue = 2,
+	BishopValue = 2,
+	CannonValue = 5,
+	KnightValue = 4,
+	PawnValue = 1,
+	RookValue = 9,
 };
 
 enum Control {
@@ -26,6 +39,7 @@ enum Control {
 	// bitwise and - magic number
 	GetPiece = 7,
 	GetColour = 24,
+	PieceTypeMask = 15,
 	AttackingMove = 128
 };
 
