@@ -1,7 +1,9 @@
 #pragma once
+#include "utility.h"
+#include "xiangqi.h"
+#include <graphics.h>
 #include <iostream>
 #include <vector>
-#include <graphics.h>
 
 class Gui {
 private:
@@ -17,28 +19,19 @@ private:
 	RECT gameTurnBar;
 
 	int curX, curY;
-	int holdChess;
-	int lastMove;
-	int gameTurn;
-	std::vector<int> validMoves;
+	Board* pB;
 
-	void clearHoldChess();
-	void clearValidMoves();
 	void drawValidMoves();
 	void drawPreviousPosition();
 	void drawNextTurnInfo(char turn);
 	void drawOnPosition(int chess, int x, int y);
 
  public:
-	Gui();
+	Gui(Board* pBoard);
 	void loadAssets();
 	void setCursorPosition(int x, int y);
-	void setHoldChess(int chess);
-	void setLastMove(int index);
-	void setValidMoves(std::vector<int> moves);
 	bool isValidMove(int index);
-	void nextRound(int turn);
-	void drawFromBoard(std::vector<int> squares);
+	void drawFromBoard();
 	int getChessClick(int x, int y);
 	void exitGui();
 };

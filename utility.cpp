@@ -1,10 +1,11 @@
+#include "utility.h"
+#include <conio.h>
+#include <graphics.h>
 #include <iostream>
 #include <sstream>
-#include <vector>
-#include <graphics.h>
-#include <conio.h>
 #include <unordered_map>
-#include "utility.h"
+#include <unordered_set>
+#include <vector>
 
 // split string into substrings using char delimiter
 // credit: stackoverflow@Arafat Hasan
@@ -50,78 +51,4 @@ void putAlphaImage(int picX, int picY, IMAGE* picture) {
 			}
 		}
 	}
-}
-
-BaseBoard::BaseBoard() {
-	fenCharToInt = {
-		{'A', Red | Advisor}, {'a', Black | Advisor},
-		{'B', Red | Bishop}, {'b', Black | Bishop},
-		{'C', Red | Cannon}, {'c', Black | Cannon},
-		{'K', Red | King}, {'k', Black | King},
-		{'N', Red | Knight}, {'n', Black | Knight},
-		{'P', Red | Pawn}, {'p', Black | Pawn},
-		{'R', Red | Rook}, {'r', Black | Rook}
-	};
-
-	fenIntToChar = {
-		{Red | Advisor, 'A'}, {Black | Advisor, 'a'},
-		{Red | Bishop, 'B'}, {Black | Bishop, 'b'},
-		{Red | Cannon, 'C'}, {Black | Cannon, 'c'},
-		{Red | King, 'K'}, {Black | King, 'k'},
-		{Red | Knight, 'N'}, {Black | Knight, 'n'},
-		{Red | Pawn, 'P'}, {Black | Pawn, 'p'},
-		{Red | Rook, 'R'}, {Black | Rook, 'r'}
-	};
-}
-
-void BaseBoard::readFromFEN(std::string fen) {
-	std::vector<std::string> fs = split(fen, Space);
-
-	// chess board
-	int file = 0, rank = 0;
-	for (char sym : fs[0]) {
-		if (sym == '/') {
-			file = 0;
-			rank++;
-		}
-		else {
-			if (isdigit(sym)) {
-				file += sym - '0';
-			}
-			else {
-				squares[rank * 9 + file] = fenCharToInt[sym];
-				file++;
-			}
-		}
-	}
-}
-
-std::string BaseBoard::convertToFEN() {
-	// chess board
-	std::string fen = "";
-	for (int i = 0; i < 10; ++i) {
-		int acc = 0;
-		for (int j = 0; j < 9; ++j) {
-			int index = i * 9 + j;
-			if (squares[index] == 0) {
-				acc++;
-			}
-			else {
-				if (acc != 0) {
-					fen += acc + '0';
-					acc = 0;
-				}
-				fen += fenIntToChar[squares[index]];
-			}
-		}
-		if (acc != 0) {
-			fen += acc + '0';
-		}
-		fen += '/';
-	}
-
-	// remove redundant '/' at the end
-	fen.pop_back();
-
-	return fen;
 }

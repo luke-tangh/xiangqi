@@ -1,13 +1,21 @@
 #pragma once
-#include <unordered_map>
-#include <graphics.h>
 #include <conio.h>
+#include <graphics.h>
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
 
+// Move consist of 16 bit
+// XXXXXXXXYYYYYYYY
+// X: from position
+// Y: to position
+using Move = unsigned __int32;
+
+// the value of piece is the result of bitwise OR
+// for example the second black cannon is
+// Black | Cannon
+// = 16 + 3 = 19 = 0001 0011
 enum PieceIndex {
-	// the value of piece is the result of bitwise OR
-	// for example the second black cannon is
-	// Black | Cannon
-	// = 32 + 16 + 3 = 51 = 0011 0011
 	None = 0,
 	Advisor = 1,
 	Bishop = 2,
@@ -21,23 +29,13 @@ enum PieceIndex {
 	Black = 16,
 };
 
-enum PieceValue {
-	AdvisorValue = 2,
-	BishopValue = 2,
-	CannonValue = 5,
-	KnightValue = 4,
-	PawnValue = 1,
-	RookValue = 9,
-};
-
 enum Control {
-	NotClicked = -1,
-	NotAttached = -1,
 	Space = ' ',
 
-	// bitwise and - magic number
-	GetPiece = 7,
-	GetColour = 24,
+	// bitwise masks
+	GetPiece = 7,    // 0000 0111
+	GetColour = 24,  // 0001 1000
+	GetMove = 255    // 1111 1111
 };
 
 const int BOARD_HEIGHT = 1000;
@@ -50,15 +48,3 @@ const int GAP = 10;
 
 std::vector<std::string> split(const std::string& s, char delim);
 void putAlphaImage(int picX, int picY, IMAGE* picture);
-void printFEN(std::string fen);
-
-class BaseBoard {
-public:
-	std::vector<int> squares;
-	std::unordered_map<int, char> fenIntToChar;
-	std::unordered_map<char, int> fenCharToInt;
-	
-	BaseBoard();
-	void readFromFEN(std::string fen);
-	std::string convertToFEN();
-};

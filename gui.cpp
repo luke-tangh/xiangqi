@@ -1,17 +1,17 @@
+#include "gui.h"
+#include "utility.h"
+#include "xiangqi.h"
+#include <conio.h>
+#include <graphics.h>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <graphics.h>
-#include <conio.h>
-#include "utility.h"
-#include "gui.h"
 
-Gui::Gui() {
+Gui::Gui(Board* pBoard) {
+	pB = pBoard;
+	
 	curX = 0;
 	curY = 0;
-	lastMove = NotClicked;
-	holdChess = NotClicked;
-	gameTurn = Red;
 
 	sidebar = { 900, 0, 999, 999 };
 	gameTurnBar = { 900, 0, 999, 99 };
@@ -50,26 +50,6 @@ void Gui::setCursorPosition(int x, int y) {
 	curY = y;
 }
 
-void Gui::setHoldChess(int chess) {
-	holdChess = chess;
-}
-
-void Gui::clearHoldChess() {
-	holdChess = NotAttached;
-}
-
-void Gui::setLastMove(int index) {
-	lastMove = index;
-}
-
-// clear holdChess and validMoves
-// set gameTurn to turn
-void Gui::nextRound(int turn) {
-	clearHoldChess();
-	clearValidMoves();
-	gameTurn = turn;
-}
-
 void Gui::drawOnPosition(int chess, int x, int y) {
 	x = max(0, min(x, BOARD_WIDTH - CHESS_SIZE));
 	y = max(0, min(y, BOARD_HEIGHT - CHESS_SIZE));
@@ -95,10 +75,16 @@ void Gui::drawOnPosition(int chess, int x, int y) {
 void Gui::drawValidMoves() {
 	setlinecolor(WHITE);
 	setlinestyle(PS_SOLID, 1);
-	setfillcolor(YELLOW);
-	for (int index : validMoves) {
-		int x = (index % 9) * CHESS_SIZE + MARGIN;
-		int y = (index / 9) * CHESS_SIZE + MARGIN;
+	for (Move m : pB->validMoves) {
+		int to = m & GetMove;
+		int x = (to % 9) * CHESS_SIZE + MARGIN;
+		int y = (to / 9) * CHESS_SIZE + MARGIN;
+		if (pB->squares[to] != None) {
+			setfillcolor(LIGHTBLUE);
+		}
+		else {
+			setfillcolor(YELLOW);
+		}
 		fillcircle(x, y, 10);
 	}
 }
@@ -117,8 +103,8 @@ void Gui::drawNextTurnInfo(char turn) {
 void Gui::drawPreviousPosition() {
 	setlinecolor(RED);
 	setlinestyle(PS_SOLID, 3);
-	int x = (lastMove % 9) * CHESS_SIZE;
-	int y = (lastMove / 9) * CHESS_SIZE;
+	int x = (pB->lastMove % 9) * CHESS_SIZE;
+	int y = (pB->lastMove / 9) * CHESS_SIZE;
 	
 	// left up
 	x += GAP;
@@ -142,33 +128,33 @@ void Gui::drawPreviousPosition() {
 	line(x, y + 100, x + 10, y + 100);
 }
 
-void Gui::drawFromBoard(std::vector<int> squares) {
+void Gui::drawFromBoard() {
 	BeginBatchDraw();
 	putimage(0, 0, &chessBoard);
 
-	for (int i = 0; i < squares.size(); ++i) {
+	for (int i = 0; i < pB->squares.size(); ++i) {
 		int file = i % 9;
 		int rank = i / 9;
-		drawOnPosition(squares[i], file * 100, rank * 100);
+		drawOnPosition(pB->squares[i], file * 100, rank * 100);
 	}
 	
 	// draw valid moves
-	if (!validMoves.empty()) {
+	if (!pB->validMoves.empty()) {
 		drawValidMoves();
 	}
 
 	// holding chess
-	if (holdChess != NotAttached) {
-		drawOnPosition(holdChess, curX, curY);
+	if (pB->holdChessVal != -1) {
+		drawOnPosition(pB->holdChessVal, curX, curY);
 	}
 
 	// chess previous position
-	if (lastMove != NotClicked) {
+	if (pB->lastMove != -1) {
 		drawPreviousPosition();
 	}
 
 	// draw information sidebar
-	drawNextTurnInfo(gameTurn);
+	drawNextTurnInfo(pB->gameTurn);
 
 	FlushBatchDraw();
 	cleardevice();
@@ -190,7 +176,7 @@ int Gui::getChessClick(int x, int y) {
 		{(xPos + 1) * CHESS_SIZE + MARGIN, (yPos + 1) * CHESS_SIZE + MARGIN}
 	};
 
-	int chessClicked = NotClicked;
+	int chessClicked = -1;
 	for (std::vector<int> xys : nearest) {
 		double dist = sqrt(pow(x - xys[0], 2) + pow(y - xys[1], 2));
 		if (dist < CHESS_RAD) {
@@ -201,16 +187,13 @@ int Gui::getChessClick(int x, int y) {
 	return chessClicked;
 }
 
-void Gui::clearValidMoves() {
-	validMoves.clear();
-}
-
-void Gui::setValidMoves(std::vector<int> moves) {
-	validMoves = moves;
-}
-
 bool Gui::isValidMove(int index) {
-	return std::count(validMoves.begin(), validMoves.end(), index) > 0;
+	for (Move m : pB->validMoves) {
+		if ((m & GetMove) == index) {
+			return true;
+		}
+	}
+	return false;
 }
 
 void Gui::exitGui() {

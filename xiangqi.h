@@ -1,60 +1,90 @@
 #pragma once
-#include <iostream>
-#include <vector>
-#include <unordered_set>
-#include <unordered_map>
+#include "bitmap.h"
 #include "utility.h"
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+#include <stack>
 
 // Starting position expressed in FEN notation
 // Use lower case for black and UPPER case for red
 const std::string START_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR";
 
-/* squares (index to position)
-* --------------------------
-* 00 01 02 03 04 05 06 07 08
-* 09 10 11 12 13 14 15 16 17
-* 18 19 20 21 22 23 24 25 26
-* 27 28 29 30 31 32 33 34 35
-* 36 37 38 39 40 41 42 43 44
-* 45 46 47 48 49 50 51 52 53
-* 54 55 56 57 58 59 60 61 62
-* 63 64 65 66 67 68 69 70 71
-* 72 73 74 75 76 77 78 79 80
-* 81 82 83 84 85 86 87 88 89
-* --------------------------
-*     | -10 | - 9 | - 8 |
+/*
+* squares is a 16x16 (i.e. 256) 1D vector 
+* _ _ _ ___ ___ ___ ___ ___ ___ ___ ___ ___ _ _ _ _
+* _ _ _ ___ ___ ___ ___ ___ ___ ___ ___ ___ _ _ _ _
+* _ _ _ ___ ___ ___ ___ ___ ___ ___ ___ ___ _ _ _ _
+* _ _ _ 051 052 053 054 055 056 057 058 059 _ _ _ _
+* _ _ _ 067 068 069 070 071 072 073 074 075 _ _ _ _
+* _ _ _ 083 084 085 086 087 088 089 090 091 _ _ _ _
+* _ _ _ 099 100 101 102 103 104 105 106 107 _ _ _ _
+* _ _ _ 115 116 117 118 119 120 121 122 123 _ _ _ _
+* _ _ _ 131 132 133 134 135 136 137 138 139 _ _ _ _
+* _ _ _ 147 148 149 150 151 152 153 154 155 _ _ _ _
+* _ _ _ 163 164 165 166 167 168 169 170 171 _ _ _ _
+* _ _ _ 179 180 181 182 183 184 185 186 187 _ _ _ _
+* _ _ _ 195 196 197 198 199 200 201 202 203 _ _ _ _
+* _ _ _ ___ ___ ___ ___ ___ ___ ___ ___ ___ _ _ _ _
+* _ _ _ ___ ___ ___ ___ ___ ___ ___ ___ ___ _ _ _ _
+* _ _ _ ___ ___ ___ ___ ___ ___ ___ ___ ___ _ _ _ _
+* 
+*     | -17 | -16 | -15 |
 * opt | - 1 |  x  | + 1 |
-*     | + 8 | + 9 | +10 |
+*     | +15 | +16 | +17 |
 */
 
-class Board: public BaseBoard {
+class Board {
 private:
+	std::stack<int> deadPieces;
+	std::unordered_map<int, char> fenIntToChar;
+	std::unordered_map<char, int> fenCharToInt;
+	std::unordered_map<int, std::unordered_set<int>> chessPos;
+
+	std::vector<int> redPieces;
+	std::vector<int> blackPieces;
 	std::vector<int> redAtkPieces;
 	std::vector<int> blackAtkPieces;
+
 	std::vector<int> directMoves;
 	std::vector<int> slidingMoves;
 	std::vector<int> knightPosMoves;
 	std::vector<int> reverseKnightBlocks;
-	std::unordered_map<int, std::unordered_set<int>> chessPos;
 
+	void swapGameTurn();
 	bool isKingFaces();
 	bool isSameColour(int chessA, int chessB);
-	std::vector<int> advisorMoves(int index, int chess);
-	std::vector<int> bishopMoves(int index, int chess);
-	std::vector<int> cannonMoves(int index, int chess);
-	std::vector<int> kingMoves(int index, int chess);
-	std::vector<int> knightMoves(int index, int chess);
-	std::vector<int> pawnMoves(int index, int chess);
-	std::vector<int> rookMoves(int index, int chess);
-	std::vector<int> moveGeneration(int index, int chess);
+
+	std::vector<Move> advisorMoves(int index, int chess);
+	std::vector<Move> bishopMoves(int index, int chess);
+	std::vector<Move> cannonMoves(int index, int chess);
+	std::vector<Move> kingMoves(int index, int chess);
+	std::vector<Move> knightMoves(int index, int chess);
+	std::vector<Move> pawnMoves(int index, int chess);
+	std::vector<Move> rookMoves(int index, int chess);
+	std::vector<Move> moveGeneration(int index, int chess);
 
 public:
+	int gameTurn;
+	int lastMove;
+	int holdChessVal;
+	int holdChessPos;
+	std::vector<int> squares;  // squares[index] = piece
+	std::vector<Move> validMoves;
+
 	Board();
+	
+	bool isTurnToMove(int index);
+	void pickUpChess(int index);
+	void dropChess();
+	void makeMove(Move m);
+	void undoMove(Move m);
+	void readFromFEN(std::string fen);
+	std::string convertToFEN();
+
 	void initSquare();
 	void initChessPosMap();
-	std::vector<int> getSquares();
-	char getChessOnPos(int index);
-	void setChessPos(int index, int chess);
-	std::vector<int> legalMoveGeneration(int index, int chess);
-	bool isKingInCheck(int king);
+	bool isKingInCheck();
+	void legalMoveGeneration(int index, int chess);
 };
