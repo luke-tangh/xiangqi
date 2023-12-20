@@ -39,6 +39,8 @@ class Board {
 private:
 	BitMap* pM;
 
+	// deadPieces stores captured pieces per move
+	// None (0) if no piece is captured add
 	std::stack<int> deadPieces;
 	std::unordered_map<int, char> fenIntToChar;
 	std::unordered_map<char, int> fenCharToInt;
@@ -46,8 +48,6 @@ private:
 
 	std::vector<int> redPieces;
 	std::vector<int> blackPieces;
-	std::vector<int> redAtkPieces;
-	std::vector<int> blackAtkPieces;
 
 	std::vector<int> directMoves;
 	std::vector<int> slidingMoves;
@@ -75,8 +75,10 @@ public:
 	std::vector<Move> validMoves;
 
 	Board(BitMap* pBitMap);
-	
-	bool isTurnToMove(int index);
+
+	void initSquare();
+	void initChessPosMap();
+
 	void pickUpChess(int index);
 	void dropChess();
 	void makeMove(Move m);
@@ -84,8 +86,8 @@ public:
 	void readFromFEN(std::string fen);
 	std::string convertToFEN();
 
-	void initSquare();
-	void initChessPosMap();
+	bool isTurnToMove(int index);
 	bool isKingInCheck();
 	void legalMoveGeneration(int index, int chess);
+	void generateAllMoves(bool attackingMove=false);
 };

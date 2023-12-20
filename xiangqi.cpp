@@ -36,20 +36,6 @@ Board::Board(BitMap* pBitMap) {
 		Black | Rook
 	};
 
-	redAtkPieces = {   
-		Red | Cannon, 
-		Red | Knight, 
-		Red | Pawn, 
-		Red | Rook
-	};
-
-	blackAtkPieces = { 
-		Black | Cannon, 
-		Black | Knight, 
-		Black | Pawn, 
-		Black | Rook
-	};
-
 	directMoves = { -16, -1, +16, +1 };
 	slidingMoves = { -17, +15, +17, -15 };
 	knightPosMoves = { -31, -33, -18, +14, +31, +33, +18, -14 };
@@ -130,10 +116,13 @@ std::string Board::convertToFEN() {
 	return fen;
 }
 
+// return true if the chess on index is turn to move
 bool Board::isTurnToMove(int index) {
 	return (squares[index] & GetColour) == gameTurn;
 }
 
+// remove a chess from board and sace as holding chess
+// for gui interaction only
 void Board::pickUpChess(int index) {
 	holdChessPos = index;
 	holdChessVal = squares[index];
@@ -141,6 +130,9 @@ void Board::pickUpChess(int index) {
 	squares[index] = None;
 }
 
+// drop holding chess to its position
+// reset holding chess to default
+// for gui interaction only
 void Board::dropChess() {
 	squares[holdChessPos] = holdChessVal;
 
@@ -148,6 +140,7 @@ void Board::dropChess() {
 	holdChessVal = -1;
 	holdChessPos = -1;
 }
+
 
 void Board::makeMove(Move m) {
 	const int to = m & GetMove;
@@ -172,7 +165,7 @@ void Board::makeMove(Move m) {
 	if (eat != None) {
 		chessPos[eat].erase(to);
 	}
-	
+
 	deadPieces.push(eat);
 	swapGameTurn();
 }
@@ -206,7 +199,7 @@ void Board::initSquare() {
 
 // read content in `squares` to map `chessPos`
 void Board::initChessPosMap() {
-	for (int i = 0; i < squares.size(); ++i) {
+	for (int i = 51; i < 204; ++i) {
 		if (squares[i] != 0) {
 			chessPos[squares[i]].insert(i);
 		}
@@ -231,8 +224,6 @@ std::vector<Move> Board::moveGeneration(int index, int chess) {
 	}
 }
 
-// TODO: alter moves
-
 std::vector<Move> Board::advisorMoves(int index) {
 	std::vector<Move> validMoves;
 	for (int move : slidingMoves) {
@@ -240,7 +231,7 @@ std::vector<Move> Board::advisorMoves(int index) {
 		// out of bound conditions
 		if (pM->kingSquare[target] == 0) continue;
 		// friendly pieces block
-		if (squares[target] == gameTurn) continue;
+		if ((squares[target] & GetColour) == gameTurn) continue;
 		validMoves.push_back((index << 8) + target);
 	}
 	return validMoves;
@@ -262,7 +253,7 @@ std::vector<Move> Board::bishopMoves(int index) {
 		// pieces block conditions
 		if (squares[block] != None) continue;
 		// friendly pieces block
-		if (squares[target] == gameTurn) continue;
+		if ((squares[target] & GetColour) == gameTurn) continue;
 		validMoves.push_back((index << 8) + target);
 	}
 	return validMoves;
@@ -283,7 +274,7 @@ std::vector<Move> Board::cannonMoves(int index) {
 			}
 			if (mount) {
 				// friendly pieces block conditions
-				if (squares[target] == gameTurn) break;
+				if ((squares[target] & GetColour) == gameTurn) break;
 				if (squares[target] != None) {
 					validMoves.push_back((index << 8) + target);
 					break;
@@ -305,7 +296,7 @@ std::vector<Move> Board::kingMoves(int index) {
 		// out of bound conditions
 		if (pM->kingSquare[target] == 0) continue;
 		// friendly pieces block conditions
-		if (squares[target] == gameTurn) continue;
+		if ((squares[target] & GetColour) == gameTurn) continue;
 		validMoves.push_back((index << 8) + target);
 	}
 	return validMoves;
@@ -321,7 +312,7 @@ std::vector<Move> Board::knightMoves(int index) {
 		// pieces block conditions
 		if (squares[block] != None) continue;
 		// friendly pieces block conditions
-		if (squares[target] == gameTurn) continue;
+		if ((squares[target] & GetColour) == gameTurn) continue;
 		validMoves.push_back((index << 8) + target);
 	}
 	return validMoves;
@@ -334,7 +325,9 @@ std::vector<Move> Board::pawnMoves(int index) {
 		// not passing river
 		if (index < 124) {
 			target = index + 16;
-			validMoves.push_back((index << 8) + target);
+			if ((squares[target] & GetColour) != gameTurn) {
+				validMoves.push_back((index << 8) + target);
+			}
 			return validMoves;
 		}
 		for (int move : directMoves) {
@@ -344,7 +337,7 @@ std::vector<Move> Board::pawnMoves(int index) {
 			// out of bound conditions
 			if (pM->inBoard[target] == 0) continue;
 			// friendly pieces block conditions
-			if (squares[target] == gameTurn) continue;
+			if ((squares[target] & GetColour) == gameTurn) continue;
 			validMoves.push_back((index << 8) + target);
 		}
 		return validMoves;
@@ -353,7 +346,9 @@ std::vector<Move> Board::pawnMoves(int index) {
 		// not passing river
 		if (index > 130) {
 			target = index - 16;
-			validMoves.push_back((index << 8) + target);
+			if ((squares[target] & GetColour) != gameTurn) {
+				validMoves.push_back((index << 8) + target);
+			}
 			return validMoves;
 		}
 		for (int move : directMoves) {
@@ -363,7 +358,7 @@ std::vector<Move> Board::pawnMoves(int index) {
 			// out of bound conditions
 			if (pM->inBoard[target] == 0) continue;
 			// friendly pieces block conditions
-			if (squares[target] == gameTurn) continue;
+			if ((squares[target] & GetColour) == gameTurn) continue;
 			validMoves.push_back((index << 8) + target);
 		}
 		return validMoves;
@@ -379,7 +374,7 @@ std::vector<Move> Board::rookMoves(int index) {
 			if (pM->inBoard[target] == 0) break;
 			// friendly pieces block conditions
 			if (squares[target] != None) {
-				if (squares[target] == gameTurn) break;
+				if ((squares[target] & GetColour) == gameTurn) break;
 				validMoves.push_back((index << 8) + target);
 				break;
 			}
@@ -407,7 +402,7 @@ void Board::legalMoveGeneration(int index, int chess) {
 		}
 		undoMove(m);
 	}
-	validMoves = legalMoves;
+	validMoves.insert(validMoves.end(), legalMoves.begin(), legalMoves.end());
 }
 
 bool Board::isKingFaces() {
@@ -511,4 +506,16 @@ bool Board::isKingInCheck() {
 	}
 
 	return false;
+}
+
+// generate all moves for the current gameTurn player
+// set attackingMove=true to get only attacking moves
+void Board::generateAllMoves(bool attackingMove) {
+	std::vector<int> pieces = gameTurn == Red ? redPieces : blackPieces;
+	for (int chess : pieces) {
+		std::unordered_set<int> positions = chessPos[chess];
+		for (int index : positions) {
+			legalMoveGeneration(index, chess);
+		}
+	}
 }
