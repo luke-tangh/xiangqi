@@ -37,6 +37,8 @@ const std::string START_FEN = "rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9
 
 class Board {
 private:
+	BitMap* pM;
+
 	std::stack<int> deadPieces;
 	std::unordered_map<int, char> fenIntToChar;
 	std::unordered_map<char, int> fenCharToInt;
@@ -54,15 +56,14 @@ private:
 
 	void swapGameTurn();
 	bool isKingFaces();
-	bool isSameColour(int chessA, int chessB);
 
-	std::vector<Move> advisorMoves(int index, int chess);
-	std::vector<Move> bishopMoves(int index, int chess);
-	std::vector<Move> cannonMoves(int index, int chess);
-	std::vector<Move> kingMoves(int index, int chess);
-	std::vector<Move> knightMoves(int index, int chess);
-	std::vector<Move> pawnMoves(int index, int chess);
-	std::vector<Move> rookMoves(int index, int chess);
+	std::vector<Move> advisorMoves(int index);
+	std::vector<Move> bishopMoves(int index);
+	std::vector<Move> cannonMoves(int index);
+	std::vector<Move> kingMoves(int index);
+	std::vector<Move> knightMoves(int index);
+	std::vector<Move> pawnMoves(int index);
+	std::vector<Move> rookMoves(int index);
 	std::vector<Move> moveGeneration(int index, int chess);
 
 public:
@@ -73,7 +74,7 @@ public:
 	std::vector<int> squares;  // squares[index] = piece
 	std::vector<Move> validMoves;
 
-	Board();
+	Board(BitMap* pBitMap);
 	
 	bool isTurnToMove(int index);
 	void pickUpChess(int index);

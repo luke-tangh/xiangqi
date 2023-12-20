@@ -77,8 +77,8 @@ void Gui::drawValidMoves() {
 	setlinestyle(PS_SOLID, 1);
 	for (Move m : pB->validMoves) {
 		int to = m & GetMove;
-		int x = (to % 9) * CHESS_SIZE + MARGIN;
-		int y = (to / 9) * CHESS_SIZE + MARGIN;
+		int x = (to % 16 - 3) * CHESS_SIZE + MARGIN;
+		int y = (to / 16 - 3) * CHESS_SIZE + MARGIN;
 		if (pB->squares[to] != None) {
 			setfillcolor(LIGHTBLUE);
 		}
@@ -103,8 +103,8 @@ void Gui::drawNextTurnInfo(char turn) {
 void Gui::drawPreviousPosition() {
 	setlinecolor(RED);
 	setlinestyle(PS_SOLID, 3);
-	int x = (pB->lastMove % 9) * CHESS_SIZE;
-	int y = (pB->lastMove / 9) * CHESS_SIZE;
+	int x = (pB->lastMove % 16 - 3) * CHESS_SIZE;
+	int y = (pB->lastMove / 16 - 3) * CHESS_SIZE;
 	
 	// left up
 	x += GAP;
@@ -132,10 +132,10 @@ void Gui::drawFromBoard() {
 	BeginBatchDraw();
 	putimage(0, 0, &chessBoard);
 
-	for (int i = 0; i < pB->squares.size(); ++i) {
-		int file = i % 9;
-		int rank = i / 9;
-		drawOnPosition(pB->squares[i], file * 100, rank * 100);
+	for (int i = 51; i < 204; ++i) {
+		int file = i % 16;
+		int rank = i / 16;
+		drawOnPosition(pB->squares[i], (file - 3) * 100, (rank - 3) * 100);
 	}
 	
 	// draw valid moves
@@ -180,7 +180,7 @@ int Gui::getChessClick(int x, int y) {
 	for (std::vector<int> xys : nearest) {
 		double dist = sqrt(pow(x - xys[0], 2) + pow(y - xys[1], 2));
 		if (dist < CHESS_RAD) {
-			chessClicked = (xys[0] / CHESS_SIZE) + 9 * (xys[1] / CHESS_SIZE);
+			chessClicked = (xys[0] / CHESS_SIZE + 3) + 16 * (xys[1] / CHESS_SIZE + 3);
 			return chessClicked;
 		}
 	}

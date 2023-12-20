@@ -6,11 +6,15 @@
 #include <unordered_set>
 #include <vector>
 
-Board::Board() {
+Board::Board(BitMap* pBitMap) {
+	pM = pBitMap;
+
 	gameTurn = Red;
 	lastMove = -1;
 	holdChessVal = -1;
 	holdChessPos = -1;
+
+	initSquare();
 
 	redPieces = {
 		Red | Advisor,
@@ -46,12 +50,10 @@ Board::Board() {
 		Black | Rook
 	};
 
-	directMoves = { -9, -1, +9, +1 };
-	slidingMoves = { -10, +8, +10, -8 };
-	knightPosMoves = { -17, -19, -11, +7, +17, +19, +11, -7 };
-	reverseKnightBlocks = { -8, -10, -10, +8, +8, +10, +10, -8 };
-
-	initSquare();
+	directMoves = { -16, -1, +16, +1 };
+	slidingMoves = { -17, +15, +17, -15 };
+	knightPosMoves = { -31, -33, -18, +14, +31, +33, +18, -14 };
+	reverseKnightBlocks = { -15, -17, -17, +15, +15, +17, +17, -15 };
 
 	fenCharToInt = {
 		{'A', Red | Advisor}, {'a', Black | Advisor},
@@ -78,10 +80,10 @@ void Board::readFromFEN(std::string fen) {
 	std::vector<std::string> fs = split(fen, Space);
 
 	// chess board
-	int file = 0, rank = 0;
+	int file = 3, rank = 3;
 	for (char sym : fs[0]) {
 		if (sym == '/') {
-			file = 0;
+			file = 3;
 			rank++;
 		}
 		else {
@@ -89,20 +91,22 @@ void Board::readFromFEN(std::string fen) {
 				file += sym - '0';
 			}
 			else {
-				squares[rank * 9 + file] = fenCharToInt[sym];
+				squares[rank * 16 + file] = fenCharToInt[sym];
 				file++;
 			}
 		}
 	}
+
+	initChessPosMap();
 }
 
 std::string Board::convertToFEN() {
 	// chess board
 	std::string fen = "";
-	for (int i = 0; i < 10; ++i) {
+	for (int i = 3; i < 13; ++i) {
 		int acc = 0;
-		for (int j = 0; j < 9; ++j) {
-			int index = i * 9 + j;
+		for (int j = 3; j < 12; ++j) {
+			int index = i * 16 + j;
 			if (squares[index] == 0) {
 				acc++;
 			}
@@ -195,13 +199,9 @@ void Board::undoMove(Move m) {
 	swapGameTurn();
 }
 
-bool Board::isSameColour(int chessA, int chessB) {
-	return (chessA & GetColour) == (chessB & GetColour);
-}
-
 // initialise board to the start of game
 void Board::initSquare() {
-	squares.resize(90, None);
+	squares.resize(256, None);
 }
 
 // read content in `squares` to map `chessPos`
@@ -220,63 +220,62 @@ void Board::swapGameTurn() {
 std::vector<Move> Board::moveGeneration(int index, int chess) {
 	const int piece = chess & GetPiece;
 	switch (piece) {
-	case Advisor: return advisorMoves(index, chess);
-	case Bishop: return bishopMoves(index, chess);
-	case Cannon: return cannonMoves(index, chess);
-	case King: return kingMoves(index, chess);
-	case Knight: return knightMoves(index, chess);
-	case Pawn: return pawnMoves(index, chess);
-	case Rook: return rookMoves(index, chess);
+	case Advisor: return advisorMoves(index);
+	case Bishop: return bishopMoves(index);
+	case Cannon: return cannonMoves(index);
+	case King: return kingMoves(index);
+	case Knight: return knightMoves(index);
+	case Pawn: return pawnMoves(index);
+	case Rook: return rookMoves(index);
 	default: return {};
 	}
 }
 
-std::vector<Move> Board::advisorMoves(int index, int chess) {
+// TODO: alter moves
+
+std::vector<Move> Board::advisorMoves(int index) {
 	std::vector<Move> validMoves;
 	for (int move : slidingMoves) {
 		int target = index + move;
 		// out of bound conditions
-		if (target < 0 || target > 89) continue;
-		if (target % 9 > 5 || target % 9 < 3) continue;
-		if (target / 9 > 2 && target / 9 < 7) continue;
+		if (pM->kingSquare[target] == 0) continue;
 		// friendly pieces block
-		if (isSameColour(squares[target], chess)) continue;
+		if (squares[target] == gameTurn) continue;
 		validMoves.push_back((index << 8) + target);
 	}
 	return validMoves;
 }
 
-std::vector<Move> Board::bishopMoves(int index, int chess) {
+std::vector<Move> Board::bishopMoves(int index) {
 	std::vector<Move> validMoves;
 	for (int move : slidingMoves) {
 		int target = index + 2 * move;
 		int block = index + move;
 		// out of bound conditions
-		if (target < 0 || target > 89) continue;
-		if ((chess & GetColour) == Black) {
-			if (target > 44 || (target / 9) % 2 == 1) continue;
+		if (pM->inBoard[target] == 0) continue;
+		if (gameTurn == Black) {
+			if (pM->whiteField[target] == 1) continue;
 		}
 		else {
-			if (target < 45 || (target / 9) % 2 == 0) continue;
+			if (pM->blackField[target] == 1) continue;
 		}
 		// pieces block conditions
 		if (squares[block] != None) continue;
 		// friendly pieces block
-		if (isSameColour(squares[target], chess)) continue;
+		if (squares[target] == gameTurn) continue;
 		validMoves.push_back((index << 8) + target);
 	}
 	return validMoves;
 }
 
-std::vector<Move> Board::cannonMoves(int index, int chess) {
+std::vector<Move> Board::cannonMoves(int index) {
 	std::vector<Move> validMoves;
 	for (int move : directMoves) {
 		int target = index + move;
 		bool mount = false;
 		while (true) {
 			// out of bound conditions
-			if (target < 0 || target > 89) break;
-			if (target / 9 != index / 9 && target % 9 != index % 9) break;
+			if (pM->inBoard[target] == 0) break;
 			if (!mount && squares[target] != None) {
 				mount = true;
 				target += move;
@@ -284,7 +283,7 @@ std::vector<Move> Board::cannonMoves(int index, int chess) {
 			}
 			if (mount) {
 				// friendly pieces block conditions
-				if (isSameColour(squares[target], chess)) break;
+				if (squares[target] == gameTurn) break;
 				if (squares[target] != None) {
 					validMoves.push_back((index << 8) + target);
 					break;
@@ -299,45 +298,42 @@ std::vector<Move> Board::cannonMoves(int index, int chess) {
 	return validMoves;
 }
 
-std::vector<Move> Board::kingMoves(int index, int chess) {
+std::vector<Move> Board::kingMoves(int index) {
 	std::vector<Move> validMoves;
 	for (int move : directMoves) {
 		int target = index + move;
 		// out of bound conditions
-		if (target < 0 || target > 89) continue;
-		if (target % 9 > 5 || target % 9 < 3) continue;
-		if (target / 9 > 2 && target / 9 < 7) continue;
+		if (pM->kingSquare[target] == 0) continue;
 		// friendly pieces block conditions
-		if (isSameColour(squares[target], chess)) continue;
+		if (squares[target] == gameTurn) continue;
 		validMoves.push_back((index << 8) + target);
 	}
 	return validMoves;
 }
 
-std::vector<Move> Board::knightMoves(int index, int chess) {
+std::vector<Move> Board::knightMoves(int index) {
 	std::vector<Move> validMoves;
 	for (int i = 0; i < knightPosMoves.size(); ++i) {
 		int target = index + knightPosMoves[i];
 		int block = index + directMoves[i / 2];
 		// out of bound conditions
-		if (target < 0 || target > 89) continue;
-		if (abs(target % 9 - index % 9) > 2) continue;
+		if (pM->inBoard[target] == 0) continue;
 		// pieces block conditions
-		if (block > 0 && block < 90 && squares[block] != None) continue;
+		if (squares[block] != None) continue;
 		// friendly pieces block conditions
-		if (isSameColour(squares[target], chess)) continue;
+		if (squares[target] == gameTurn) continue;
 		validMoves.push_back((index << 8) + target);
 	}
 	return validMoves;
 }
 
-std::vector<Move> Board::pawnMoves(int index, int chess) {
+std::vector<Move> Board::pawnMoves(int index) {
 	std::vector<Move> validMoves;
 	int target = 0;
-	if ((chess & GetColour) == Black) {
+	if (gameTurn == Black) {
 		// not passing river
-		if (index < 45) {
-			target = index + 9;
+		if (index < 124) {
+			target = index + 16;
 			validMoves.push_back((index << 8) + target);
 			return validMoves;
 		}
@@ -346,18 +342,17 @@ std::vector<Move> Board::pawnMoves(int index, int chess) {
 			// no backwards move
 			if (move < -1) continue;
 			// out of bound conditions
-			if (target < 0 || target > 89) continue;
-			if (target / 9 != index / 9 && target % 9 != index % 9) continue;
+			if (pM->inBoard[target] == 0) continue;
 			// friendly pieces block conditions
-			if (isSameColour(squares[target], chess)) continue;
+			if (squares[target] == gameTurn) continue;
 			validMoves.push_back((index << 8) + target);
 		}
 		return validMoves;
 	}
 	else {
 		// not passing river
-		if (index > 44) {
-			target = index - 9;
+		if (index > 130) {
+			target = index - 16;
 			validMoves.push_back((index << 8) + target);
 			return validMoves;
 		}
@@ -366,27 +361,25 @@ std::vector<Move> Board::pawnMoves(int index, int chess) {
 			// no backwards move
 			if (move > 1) continue;
 			// out of bound conditions
-			if (target < 0 || target > 89) continue;
-			if (target / 9 != index / 9 && target % 9 != index % 9) continue;
+			if (pM->inBoard[target] == 0) continue;
 			// friendly pieces block conditions
-			if (isSameColour(squares[target], chess)) continue;
+			if (squares[target] == gameTurn) continue;
 			validMoves.push_back((index << 8) + target);
 		}
 		return validMoves;
 	}
 }
 
-std::vector<Move> Board::rookMoves(int index, int chess) {
+std::vector<Move> Board::rookMoves(int index) {
 	std::vector<Move> validMoves;
 	for (int move : directMoves) {
 		int target = index + move;
 		while (true) {
 			// out of bound conditions
-			if (target < 0 || target > 89) break;
-			if (target / 9 != index / 9 && target % 9 != index % 9) break;
+			if (pM->inBoard[target] == 0) break;
 			// friendly pieces block conditions
-			if (isSameColour(squares[target], chess)) break;
 			if (squares[target] != None) {
+				if (squares[target] == gameTurn) break;
 				validMoves.push_back((index << 8) + target);
 				break;
 			}
@@ -402,8 +395,8 @@ std::vector<Move> Board::rookMoves(int index, int chess) {
 void Board::legalMoveGeneration(int index, int chess) {
 	std::vector<Move> pseudoLegalMoves = moveGeneration(index, chess);
 	std::vector<Move> legalMoves;
-	int kingColour = chess & GetColour;
-	int rivalColour = kingColour ^ GetColour;
+	int kingColour = gameTurn;
+	int rivalColour = gameTurn ^ GetColour;
 	for (Move m : pseudoLegalMoves) {
 		makeMove(m);
 		if (isKingInCheck()) {
@@ -421,11 +414,11 @@ bool Board::isKingFaces() {
 	int redKingPos = *chessPos[Red | King].begin();
 	int blackKingPos = *chessPos[Black | King].begin();
 
-	if (redKingPos % 9 != blackKingPos % 9) {
+	if (redKingPos % 16 != blackKingPos % 16) {
 		return false;
 	}
 
-	for (int i = blackKingPos + 9; i < redKingPos; i += 9) {
+	for (int i = blackKingPos + 16; i < redKingPos; i += 16) {
 		if (squares[i] != None) {
 			return false;
 		}
@@ -460,9 +453,9 @@ bool Board::isKingInCheck() {
 		int target = kingPos + knightPosMoves[i];
 		int block = kingPos + reverseKnightBlocks[i];
 		// out of bound conditions
-		if (target < 0 || target > 89) continue;
+		if (pM->inBoard[target] == 0) continue;
 		// pieces block conditions
-		if (block > 0 && block < 90 && squares[block] != None) continue;
+		if (squares[block] != None) continue;
 		// attack condition
 		if (squares[target] == (rivalColour | Knight)) {
 			return true;
@@ -475,8 +468,7 @@ bool Board::isKingInCheck() {
 
 		while (true) {
 			// out of bound conditions
-			if (target < 0 || target > 89) break;
-			if (target / 9 != kingPos / 9 && target % 9 != kingPos % 9) break;
+			if (pM->inBoard[target] == 0) break;
 			// is rook find
 			if (squares[target] == (rivalColour | Rook)) {
 				return true;
@@ -497,8 +489,7 @@ bool Board::isKingInCheck() {
 
 		while (true) {
 			// out of bound conditions
-			if (target < 0 || target > 89) break;
-			if (target / 9 != kingPos / 9 && target % 9 != kingPos % 9) break;
+			if (pM->inBoard[target] == 0) break;
 			if (squares[target] == (rivalColour | Cannon)) {
 				cannonFind = true;
 				break;

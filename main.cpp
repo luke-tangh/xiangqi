@@ -1,14 +1,15 @@
 #include "gui.h"
+#include "bitmap.h"
 #include "utility.h"
 #include "xiangqi.h"
 #include <iostream>
 
 int main() {
-    Board* pB(new Board);
+    BitMap* pM(new BitMap());
+    Board* pB(new Board(pM));
     Gui* pG(new Gui(pB));
 
     pB->readFromFEN(START_FEN);
-    pB->initChessPosMap();
     pG->drawFromBoard();
 
 	ExMessage m;
