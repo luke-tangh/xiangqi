@@ -3,7 +3,6 @@
 #include "bitmap.h"
 #include "utility.h"
 #include "xiangqi.h"
-#include <iostream>
 
 int main() {
     BitMap* pM(new BitMap());
@@ -80,6 +79,8 @@ int main() {
 
     delete pG;
     delete pB;
+    delete pM;
+    delete pA;
 
     return 0;
 } 

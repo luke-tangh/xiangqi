@@ -1,10 +1,10 @@
 #pragma once
-#include "utility.h"
-#include "xiangqi.h"
 #include <conio.h>
 #include <graphics.h>
 #include <iostream>
 #include <vector>
+#include "utility.h"
+#include "xiangqi.h"
 
 class Gui {
 private:

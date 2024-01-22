@@ -1,6 +1,6 @@
 #pragma once
-#include "utility.h"
 #include <vector>
+#include "utility.h"
 
 class BitMap {
 public:

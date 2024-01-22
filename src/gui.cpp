@@ -21,21 +21,21 @@ Gui::Gui(Board* pBoard) {
 }
 
 void Gui::loadAssets() {
-	loadimage(&chessBoard, _T("./assets/xiangqi_gmchess_wood.png"), BOARD_WIDTH, BOARD_HEIGHT);
-	loadimage(&redAdvisor, _T("./assets/red_advisor.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&redBishop, _T("./assets/red_bishop.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&redCannon, _T("./assets/red_cannon.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&redKing, _T("./assets/red_king.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&redKnight, _T("./assets/red_knight.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&redPawn, _T("./assets/red_pawn.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&redRook, _T("./assets/red_rook.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&blackAdvisor, _T("./assets/black_advisor.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&blackBishop, _T("./assets/black_bishop.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&blackCannon, _T("./assets/black_cannon.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&blackKing, _T("./assets/black_king.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&blackKnight, _T("./assets/black_knight.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&blackPawn, _T("./assets/black_pawn.png"), CHESS_SIZE, CHESS_SIZE);
-	loadimage(&blackRook, _T("./assets/black_rook.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&chessBoard, _T("assets/xiangqi_gmchess_wood.png"), BOARD_WIDTH, BOARD_HEIGHT);
+	loadimage(&redAdvisor, _T("assets/red_advisor.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&redBishop, _T("assets/red_bishop.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&redCannon, _T("assets/red_cannon.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&redKing, _T("assets/red_king.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&redKnight, _T("assets/red_knight.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&redPawn, _T("assets/red_pawn.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&redRook, _T("assets/red_rook.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&blackAdvisor, _T("assets/black_advisor.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&blackBishop, _T("assets/black_bishop.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&blackCannon, _T("assets/black_cannon.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&blackKing, _T("assets/black_king.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&blackKnight, _T("assets/black_knight.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&blackPawn, _T("assets/black_pawn.png"), CHESS_SIZE, CHESS_SIZE);
+	loadimage(&blackRook, _T("assets/black_rook.png"), CHESS_SIZE, CHESS_SIZE);
 }
 
 void Gui::setCursorPosition(int x, int y) {

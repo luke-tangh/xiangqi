@@ -1,11 +1,11 @@
 #pragma once
-#include "bitmap.h"
-#include "utility.h"
 #include <iostream>
 #include <stack>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include "bitmap.h"
+#include "utility.h"
 
 // Starting position expressed in FEN notation
 // Use lower case for black and UPPER case for red
