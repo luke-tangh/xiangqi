@@ -2,10 +2,10 @@
 #include "bitmap.h"
 #include "utility.h"
 #include <iostream>
+#include <stack>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <stack>
 
 // Starting position expressed in FEN notation
 // Use lower case for black and UPPER case for red
@@ -42,12 +42,9 @@ private:
 	// deadPieces stores captured pieces per move
 	// None (0) if no piece is captured add
 	std::stack<int> deadPieces;
+
 	std::unordered_map<int, char> fenIntToChar;
 	std::unordered_map<char, int> fenCharToInt;
-	std::unordered_map<int, std::unordered_set<int>> chessPos;
-
-	std::vector<int> redPieces;
-	std::vector<int> blackPieces;
 
 	std::vector<int> directMoves;
 	std::vector<int> slidingMoves;
@@ -72,6 +69,7 @@ public:
 	int holdChessVal;
 	int holdChessPos;
 	std::vector<int> squares;  // squares[index] = piece
+	std::unordered_map<int, std::unordered_set<int>> chessPos;
 	std::vector<Move> validMoves;
 
 	Board(BitMap* pBitMap);
@@ -87,7 +85,9 @@ public:
 	std::string convertToFEN();
 
 	bool isTurnToMove(int index);
+	bool isValidMove(int index);
+	bool isKingDead();
 	bool isKingInCheck();
-	void legalMoveGeneration(int index, int chess);
+	void legalMoveGeneration(int index, int chess, bool attackingMove = false);
 	void generateAllMoves(bool attackingMove=false);
 };

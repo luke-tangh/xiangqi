@@ -1,6 +1,7 @@
 #pragma once
 #include "utility.h"
 #include "xiangqi.h"
+#include <conio.h>
 #include <graphics.h>
 #include <iostream>
 #include <vector>
@@ -30,7 +31,6 @@ private:
 	Gui(Board* pBoard);
 	void loadAssets();
 	void setCursorPosition(int x, int y);
-	bool isValidMove(int index);
 	void drawFromBoard();
 	int getChessClick(int x, int y);
 	void exitGui();

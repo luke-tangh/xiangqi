@@ -1,11 +1,4 @@
 #include "utility.h"
-#include <conio.h>
-#include <graphics.h>
-#include <iostream>
-#include <sstream>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
 // split string into substrings using char delimiter
 // credit: stackoverflow@Arafat Hasan

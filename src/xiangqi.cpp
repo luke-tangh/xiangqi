@@ -1,10 +1,4 @@
-﻿#include "utility.h"
-#include "xiangqi.h"
-#include <algorithm>
-#include <iostream>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+﻿#include "xiangqi.h"
 
 Board::Board(BitMap* pBitMap) {
 	pM = pBitMap;
@@ -15,26 +9,6 @@ Board::Board(BitMap* pBitMap) {
 	holdChessPos = -1;
 
 	initSquare();
-
-	redPieces = {
-		Red | Advisor,
-		Red | Bishop,
-		Red | Cannon,
-		Red | King,
-		Red | Knight,
-		Red | Pawn,
-		Red | Rook
-	};
-
-	blackPieces = {
-		Black | Advisor,
-		Black | Bishop,
-		Black | Cannon,
-		Black | King,
-		Black | Knight,
-		Black | Pawn,
-		Black | Rook
-	};
 
 	directMoves = { -16, -1, +16, +1 };
 	slidingMoves = { -17, +15, +17, -15 };
@@ -121,6 +95,15 @@ bool Board::isTurnToMove(int index) {
 	return (squares[index] & GetColour) == gameTurn;
 }
 
+bool Board::isValidMove(int index) {
+	for (Move m : validMoves) {
+		if ((m & GetMove) == index) {
+			return true;
+		}
+	}
+	return false;
+}
+
 // remove a chess from board and sace as holding chess
 // for gui interaction only
 void Board::pickUpChess(int index) {
@@ -151,8 +134,6 @@ void Board::makeMove(Move m) {
 		// place holding chess back to the board
 		// before make move - essential
 		dropChess();
-		lastMove = from;
-		validMoves.clear();
 	}
 
 	const int piece = squares[from];
@@ -167,6 +148,10 @@ void Board::makeMove(Move m) {
 	}
 
 	deadPieces.push(eat);
+
+	lastMove = from;
+	validMoves.clear();
+
 	swapGameTurn();
 }
 
@@ -387,22 +372,35 @@ std::vector<Move> Board::rookMoves(int index) {
 	return validMoves;
 }
 
-void Board::legalMoveGeneration(int index, int chess) {
+void Board::legalMoveGeneration(int index, int chess, bool attackingMove) {
 	std::vector<Move> pseudoLegalMoves = moveGeneration(index, chess);
 	std::vector<Move> legalMoves;
+
 	int kingColour = gameTurn;
 	int rivalColour = gameTurn ^ GetColour;
+	
 	for (Move m : pseudoLegalMoves) {
+		if (attackingMove) {
+			const int to = m & GetMove;
+			if (squares[to] == None) continue;
+		}
+
 		makeMove(m);
+		
 		if (isKingInCheck()) {
 			// king captured
 		}
 		else {
 			legalMoves.push_back(m);
 		}
+		
 		undoMove(m);
 	}
 	validMoves.insert(validMoves.end(), legalMoves.begin(), legalMoves.end());
+}
+
+bool Board::isKingDead() {
+	return chessPos[Red | King].empty() || chessPos[Black | King].empty();
 }
 
 bool Board::isKingFaces() {
@@ -425,11 +423,12 @@ bool Board::isKingFaces() {
 bool Board::isKingInCheck() {
 	int kingColour = gameTurn ^ GetColour;
 	int rivalColour = gameTurn;
-	int kingPos = *chessPos[King | kingColour].begin();
 
 	if (isKingFaces()) {
 		return true;
 	}
+
+	int kingPos = *chessPos[King | kingColour].begin();
 
 	// pawn attack
 	for (int move : directMoves) {
@@ -511,11 +510,10 @@ bool Board::isKingInCheck() {
 // generate all moves for the current gameTurn player
 // set attackingMove=true to get only attacking moves
 void Board::generateAllMoves(bool attackingMove) {
-	std::vector<int> pieces = gameTurn == Red ? redPieces : blackPieces;
-	for (int chess : pieces) {
-		std::unordered_set<int> positions = chessPos[chess];
+	for (int chess : pM->pieces) {
+		std::unordered_set<int> positions = chessPos[gameTurn | chess];
 		for (int index : positions) {
-			legalMoveGeneration(index, chess);
+			legalMoveGeneration(index, gameTurn | chess, attackingMove);
 		}
 	}
 }

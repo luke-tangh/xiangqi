@@ -18,6 +18,24 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\agent.h" />
+    <ClInclude Include="src\bitmap.h" />
+    <ClInclude Include="src\gui.h" />
+    <ClInclude Include="src\utility.h" />
+    <ClInclude Include="src\xiangqi.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\agent.cpp" />
+    <ClCompile Include="src\bitmap.cpp" />
+    <ClCompile Include="src\gui.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\utility.cpp" />
+    <ClCompile Include="src\xiangqi.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -126,19 +144,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="bitmap.cpp" />
-    <ClCompile Include="gui.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="utility.cpp" />
-    <ClCompile Include="xiangqi.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="bitmap.h" />
-    <ClInclude Include="utility.h" />
-    <ClInclude Include="gui.h" />
-    <ClInclude Include="xiangqi.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

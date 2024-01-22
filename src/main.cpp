@@ -1,3 +1,4 @@
+#include "agent.h"
 #include "gui.h"
 #include "bitmap.h"
 #include "utility.h"
@@ -8,6 +9,7 @@ int main() {
     BitMap* pM(new BitMap());
     Board* pB(new Board(pM));
     Gui* pG(new Gui(pB));
+    Agent* pA(new Agent(pM, pB));
 
     pB->readFromFEN(START_FEN);
     pG->drawFromBoard();
@@ -29,10 +31,23 @@ int main() {
             if (chessClicked == -1) break;
             // drop a chess
             if (chessAttached) {
-                if (!pG->isValidMove(chessClicked)) break;
+                if (!pB->isValidMove(chessClicked)) break;
                 pB->makeMove((pB->holdChessPos << 8) + chessClicked);
                 pG->drawFromBoard();
                 chessAttached = false;
+
+                // agent move
+                if (AGENT_ON) {
+                    pA->resetAgentMove();
+                    pA->search(SEARCH_DEPTH, -INT_MAX, INT_MAX);
+                    if (pA->agentMove != 0) {
+                        pB->makeMove(pA->agentMove);
+                    }
+                    else {
+                        std::cout << "no move available" << std::endl;
+                    }
+                    pG->drawFromBoard();
+                }
             }
             // select a chess
             else {

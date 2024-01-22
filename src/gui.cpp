@@ -1,11 +1,4 @@
 #include "gui.h"
-#include "utility.h"
-#include "xiangqi.h"
-#include <conio.h>
-#include <graphics.h>
-#include <iostream>
-#include <sstream>
-#include <vector>
 
 Gui::Gui(Board* pBoard) {
 	pB = pBoard;
@@ -185,15 +178,6 @@ int Gui::getChessClick(int x, int y) {
 		}
 	}
 	return chessClicked;
-}
-
-bool Gui::isValidMove(int index) {
-	for (Move m : pB->validMoves) {
-		if ((m & GetMove) == index) {
-			return true;
-		}
-	}
-	return false;
 }
 
 void Gui::exitGui() {

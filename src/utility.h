@@ -2,8 +2,10 @@
 #include <conio.h>
 #include <graphics.h>
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 // Move consist of 16 bit
 // XXXXXXXXYYYYYYYY
@@ -38,6 +40,8 @@ enum Control {
 	GetMove = 255    // 1111 1111
 };
 
+const bool AGENT_ON = false;
+
 const int BOARD_HEIGHT = 1000;
 const int BOARD_WIDTH = 900;
 const int CHESS_SIZE = 100;
@@ -45,6 +49,8 @@ const int MARGIN = 50;
 // magic number - measured
 const int CHESS_RAD = 38;
 const int GAP = 10;
+
+const int SEARCH_DEPTH = 4;
 
 std::vector<std::string> split(const std::string& s, char delim);
 void putAlphaImage(int picX, int picY, IMAGE* picture);
